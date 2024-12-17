@@ -1,0 +1,784 @@
+import pandas as pd
+import tkinter as tk
+from tkinter import ttk, simpledialog, messagebox
+import matplotlib.pyplot as plt
+import os
+from datetime import datetime
+import ttkbootstrap as tb
+import time
+
+
+class mainWindow:
+    def __init__(self, title):
+        
+        #Initialise main window
+        self.root = tb.Window()
+        self.root.style.theme_use('journal')
+        self.root.title(title)
+        self.current_frame = None
+        self.screenWidth = self.root.winfo_screenwidth()
+        self.screenHeight = self.root.winfo_screenheight()
+        x = (self.screenWidth - 1000) // 2
+        y = (self.screenHeight - 750) // 2 
+        self.window_size = f'{1000}x{750}+{x}+{y}'
+        self.root.geometry(self.window_size)
+
+        
+
+    def clear_frame(self):
+        """Remove the current frame's widgets."""
+        
+        if hasattr(self, 'current_frame') and self.current_frame is not None:
+            for widget in self.current_frame.winfo_children():
+                print(widget)
+                widget.destroy()
+                
+            self.current_frame.destroy()
+        self.current_frame = None
+    
+        
+        for widget in self.root.winfo_children():
+            print(widget)
+            widget.destroy()
+        
+
+    def run(self):
+        self.root.mainloop()
+
+class mainApp(mainWindow):
+    def __init__(self, title):
+        super().__init__(title)
+        self.menuGUI()
+
+    def menuGUI(self):
+        self.current_frame = ttk.Labelframe(self.root, text="Main Menu", padding=(100, 100))
+        self.current_frame.pack(pady=10, padx=10, fill='both', expand=True)
+        
+        titleLabel = ttk.Label(self.current_frame, text="Quaktask", font=("Arial", 40, "bold"))
+        titleLabel.pack(padx=10, pady=10)
+       
+        
+        #Button for Main Menu
+    
+        self.button1 = ttk.Button(self.current_frame, text='Expense Tracker', bootstyle='info', 
+                                  command=self.open_expense_tracker).pack(padx=10, fill=None, expand=True)
+        self.button2 = ttk.Button(self.current_frame, text='Flashcard Quizzer', bootstyle='info', 
+                                  command=self.open_flashcard).pack(padx=10, fill=None, expand=True)
+        self.button3 = ttk.Button(self.current_frame, text='To-Do List', bootstyle='info', 
+                                  command=self.open_ToDoList).pack(padx=10, fill=None, expand=True)
+        self.button4 = ttk.Button(self.current_frame, text='Pomodoro Timer', bootstyle='info', 
+                                  command=self.open_PomodoroTimer).pack(padx=10, fill=None, expand=True)
+        self.button5 = ttk.Button(self.current_frame, text='Exit', bootstyle='danger', 
+                                  command=self.root.quit).pack(padx=10, fill=None, expand=True)
+
+    def open_expense_tracker(self):
+        # Open the Expense Tracker in a new window
+        print("Opening Expense Tracker...")
+        self.clear_frame()
+        Expense = ExpenseTracker("Expense Tracker", self.root, self)
+        self.current_frame = Expense.current_frame
+
+    def open_flashcard(self):
+        # Open the Expense Tracker in a new window
+        print("Opening Flashcard Quizzer...")
+        self.clear_frame()
+        Flashcard = FlashcardApp("Flashcard", self.root, self)
+        self.current_frame = Flashcard.current_frame
+
+    def open_ToDoList(self):
+        # Open the To-Do List in a new window
+        print("Opening To Do List...")
+        self.clear_frame()
+        ToDoList = ToDoApp("Flashcard", self.root, self)
+        self.current_frame = ToDoList.current_frame
+
+    def open_PomodoroTimer(self):
+        # Open the Expense Tracker in a new window
+        print("Opening To Do List...")
+        self.clear_frame()
+        PomodoroTimer = Pomodorotimer("Pomodoro Timer", self.root, self)
+        self.current_frame = PomodoroTimer.current_frame
+        
+
+
+
+
+class ExpenseTracker(mainWindow):
+    
+    def __init__(self, title, root_window, mainApp):
+
+        self.root = root_window
+        self.mainApp = mainApp
+        self.root.title(title)
+        self.current_frame = ttk.Frame(self.root)
+        self.current_frame.pack(fill='both')
+        
+        #Initialise expense data and categories
+        self.expense_df = pd.DataFrame(columns=['Date', 'Amount', 'Category', 'Description'])
+        self.categories = ["Food", "Transportation", "Utilities", "Entertainment", "Others"]
+
+        self.setupUi()
+        self.createDirectories()
+        
+
+    #Create directory for new expense file
+    def createDirectories(self):
+        if not os.path.exists("expense_data"):
+            os.makedirs("expense_data")
+
+    #Set up GUI components
+    def setupUi(self):
+        
+        #InputFrame for input widgets
+        inputFrame = ttk.LabelFrame(self.root, text= 'Add Expense', bootstyle='info', padding=(10,10))
+        inputFrame.pack(padx=10, pady=10, fill='x')
+
+        #Input for Amount
+        self.amountLabel = ttk.Label(inputFrame, text= 'Amount: ').grid(row=0, column=0, sticky= 'w',padx=5, pady=5)
+        self.amountEntry = ttk.Entry(inputFrame, width=20, style="info.TEntry")
+        self.amountEntry.grid(row=0, column=1, padx=5, pady=5)
+
+        #Category label
+        self.categoryLabel = ttk.Label(inputFrame, text= 'Category: ').grid(row=0, column=2, sticky= 'w',padx=5, pady=5)
+        self.categoryVar = tk.StringVar()
+        self.categoryCombo = ttk.Combobox(inputFrame, bootstyle='info', textvariable=self.categoryVar, values=self.categories)
+        self.categoryCombo.grid(row=0, column=3, padx=5, pady=5)
+        self.categoryCombo.set("Select Category")
+
+        #Date picker
+        self.dateFrame = ttk.Label(inputFrame, text= 'Date: ').grid(row=1, column=0, sticky='w',padx=5, pady=5)
+        self.dateEntry = tb.DateEntry(inputFrame, bootstyle='info', firstweekday=0)
+        self.dateEntry.grid(row=1, column=1, padx=5, pady=5)
+
+        #Description field
+        self.descriptionLabel = ttk.Label(inputFrame, text= 'Description: ').grid(row=2, column=0, sticky= 'w', padx=5, pady=5)
+        self.descriptionEntry = ttk.Entry(inputFrame, width=40, bootstyle='info')
+        self.descriptionEntry.grid(row=2, column=1, columnspan=1, padx=5, pady=5)
+
+        #Add expense button
+        add_Button = ttk.Button(inputFrame, text='Add Expense', bootstyle='success', command = self.add_Expense)
+        add_Button.grid(row=3, column=1, columnspan=2, pady=10)
+
+        #Expenses Treeview
+        self.tree = ttk.Treeview(self.root, columns=("Date", "Amount", "Category", "Description"), bootstyle='info', show="headings")
+        self.tree.heading("Date", text="Date")
+        self.tree.heading("Amount", text="Amount")
+        self.tree.heading("Category", text="Category")
+        self.tree.heading("Description", text="Description")
+
+        self.tree.column("Date", anchor="center", width=120)
+        self.tree.column("Amount", anchor="center", width=120)
+        self.tree.column("Category", anchor="center", width=120)
+        self.tree.column("Description", anchor="center", width=200)
+
+        self.tree.pack(padx=10, pady=10, expand=True, fill='both')
+
+        #Button frame for control buttons
+        buttonFrame = ttk.Frame(self.root)
+        buttonFrame.pack(padx=10, pady=10)
+
+        visualiseButton = ttk.Button(buttonFrame, text='Visualise Expenses', bootstyle='info', command=self.visualise_Expenses) #Visualise Expenses Button
+        visualiseButton.pack(side=tk.LEFT, padx=10)
+        saveButton = ttk.Button(buttonFrame, text='Save Expenses', bootstyle='success', command=self.save_Expenses) #Save Expenses Button
+        saveButton.pack(side=tk.LEFT, padx=10)
+        loadButton = ttk.Button(buttonFrame, text='Load Expenses', bootstyle='info', command=self.load_Expenses) #Load Expenses Button
+        loadButton.pack(side=tk.LEFT, padx=10)
+        closeButton = ttk.Button(buttonFrame, text="Close", command=self.return_to_main_menu)
+        closeButton.pack(side=tk.LEFT, padx=10)
+
+    #Return to Main Menu
+    def return_to_main_menu(self):
+        
+        self.mainApp.clear_frame()
+        self.mainApp.menuGUI()
+        
+
+    #Add a new expense entry
+    def add_Expense(self):
+        try:    
+            #Get input values
+            amount = self.amountEntry.get()
+            category = self.categoryVar.get()
+            description = self.descriptionEntry.get()
+            date = self.dateEntry.entry.get()
+
+            #Input validation
+            if category == "Select Category":
+                raise ValueError("Please select a category")
+            
+            if amount is None or amount.strip() == '':
+                raise ValueError("Please input an amount")
+            
+            #Convert amount to float and add inputs to Dataframe 
+            amount = float(amount)
+            display_date = pd.to_datetime(date)
+            new_Expense = pd.DataFrame({
+                "Date": [display_date],
+                "Amount": [amount],
+                "Category": [category],
+                "Description": [description]
+            })
+
+            
+
+            #Add new expense to current expense dataframe
+            self.expense_df = pd.concat([self.expense_df, new_Expense], ignore_index=True)
+            
+            self.expense_df = self.expense_df.sort_values('Date')
+            
+
+            #Clear the treeview
+            for record in self.tree.get_children():
+                self.tree.delete(record)
+
+            #insert data into Treeview
+            for index,row in self.expense_df.iterrows():
+                self.tree.insert(parent='', index='end', values=(row['Date'].strftime('%Y-%m-%d'), 
+                                                                 f"${row['Amount']}", 
+                                                                 row['Category'], 
+                                                                 row['Description']))
+            
+            #Clear input fields
+            self.amountEntry.delete(0, tk.END)
+            self.categoryCombo.set("Select Category")
+            self.descriptionEntry.delete(0, tk.END)
+
+        except ValueError as e:
+            messagebox.showerror(title='Input Error', message=f'{str(e)}')
+
+    #Visualise expenses as piechart
+    def visualise_Expenses(self):
+        
+        #Check existence of any category
+        
+        
+        if self.expense_df.empty:
+            messagebox.showerror(title='Visualisation Error', message=f'Cant visualise expenses')
+            return
+            
+        
+         
+        #Set visual style 
+        plt.style.use("fivethirtyeight")
+
+        #Group expenses by category and calculate the total amount
+        totalCategory = self.expense_df.groupby('Category')['Amount'].sum()
+        
+        #Create piechart with category totals
+        plt.pie(totalCategory.values, labels=totalCategory.index, 
+                autopct='%1.1f%%', shadow=True, 
+                wedgeprops={'edgecolor': 'black' })
+        
+        #Set piechart title
+        plt.title('Expenses by Category')
+
+        #Ensure piechart has equal aspect ratio
+        plt.axis()
+        
+        #Adjust layout and display chart
+        plt.tight_layout()
+        plt.show()
+
+    #Save expenses to csv file
+    def save_Expenses(self):    
+        try:
+            file_name = f"expense_data/expenses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            self.expense_df.to_csv(file_name, index=False)
+            messagebox.showinfo(title='File saved', message='File saved successfully.')
+        except Exception as e:
+            messagebox.showerror(title='Save Error', message=f'Unable to save the file: {str(e)}')
+
+    #Load expenses from CSV file
+    def load_Expenses(self):
+        try:
+            #Obtain file name and path and convert 'Dtte' column into datetime object
+            file_name = simpledialog.askstring('Input File Name', "Enter your file name: ", parent=self.root)   
+            file_path = f"expense_data/{file_name}" 
+
+            if not file_name:
+                return
+            
+            loaded_file = pd.read_csv(file_path, parse_dates= ['Date'])
+            
+            
+        
+            #Update expenses Dataframe
+            self.expense_df = loaded_file
+
+            
+            #Delete old records
+            for record in self.tree.get_children():
+                self.tree.delete(record)
+
+            #Update Treeview from expenses Dataframe
+            for index, row in self.expense_df.iterrows():
+                dollar_amount = f"${row['Amount']}"
+                self.tree.insert(parent='', index='end', values=(row['Date'].strftime('%Y-%m-%d'), 
+                                                                 dollar_amount, 
+                                                                 row['Category'],
+                                                                 row['Description']))
+                
+            messagebox.showinfo(title='Expenses loaded', message=f'Expenses from {file_path} loaded successfully.')
+        except Exception as e:
+            messagebox.showerror(title='Load Error', message=f'Unable to load the file: {str(e)}')
+
+
+class FlashcardBase(mainWindow):
+    """Base class to manage flashcards."""
+    def __init__(self):
+        
+        self.flashcards = {}
+
+    def add_flashcard(self, question, answer):
+        """Add a flashcard to the collection."""
+        if question in self.flashcards:
+            return False  # Indicates a duplicate
+        self.flashcards[question] = answer
+        return True
+
+    def reset_flashcards(self):
+        """Clear all flashcards."""
+        self.flashcards.clear()
+
+
+class FlashcardApp(FlashcardBase):
+    """GUI-based flashcard application."""
+    def __init__(self, title, root_window, mainApp):
+        super().__init__()
+        self.root = root_window
+        self.mainApp = mainApp
+        self.root.title(title)
+        self.current_frame = ttk.Frame(self.root)
+        self.current_frame.pack(fill='both')
+        
+        self.correct_answers = 0  # Tracks correct answers during quizzes
+        
+        self.GUI_menu()
+
+    def return_to_main_menu(self):
+        self.clear_frame()
+        self.mainApp.menuGUI()
+
+    def GUI_menu(self):
+        """Display the main menu."""
+        self.clear_frame()
+        tk.Label(self.root, text="Flashcard App", font=("Arial", 50)).pack(pady=50)
+        tk.Button(self.root, text="Create Flashcards", command=self.create_flashcards, padx=20, pady=10).pack(pady=5)
+        tk.Button(self.root, text="View Flashcards", command=self.view_flashcards, padx=20, pady=10).pack(pady=5)
+        tk.Button(self.root, text="Quiz Yourself", command=self.quiz_flashcards, padx=20, pady=10).pack(pady=5)
+        tk.Button(self.root, text="Reset Flashcards", command=self.confirm_reset, padx=20, pady=10).pack(pady=5)
+        tk.Button(self.root, text="Exit", command=self.return_to_main_menu, padx=20, pady=10).pack(pady=5)
+
+    def create_flashcards(self):
+        """Allows the user to create flashcards."""
+        self.clear_frame()
+        tk.Label(self.root, text="Create a Flashcard", font=("Arial", 18), padx=20, pady=10).pack(pady=10)
+
+        tk.Label(self.root, text="Question:").pack()
+        self.question_entry = tk.Entry(self.root, width=50)
+        self.question_entry.pack(pady=5)
+
+        tk.Label(self.root, text="Answer:").pack()
+        self.answer_entry = tk.Entry(self.root, width=50)
+        self.answer_entry.pack(pady=5)
+
+        tk.Button(self.root, text="Add Flashcard", command=self.process_add_flashcard).pack(pady=5)
+        tk.Button(self.root, text="Back to Menu", command=self.GUI_menu).pack(pady=5)
+
+    def process_add_flashcard(self):
+        """Handle adding a flashcard."""
+        question = self.question_entry.get().strip()
+        answer = self.answer_entry.get().strip()
+        if question and answer:
+            if self.add_flashcard(question, answer):
+                messagebox.showinfo("Success", "Flashcard added!")
+                self.question_entry.delete(0, tk.END)
+                self.answer_entry.delete(0, tk.END)
+            else:
+                messagebox.showerror("Error", "This question already exists.")
+        else:
+            messagebox.showerror("Error", "Please fill in both fields.")
+
+    def view_flashcards(self):
+        """Display all flashcards."""
+        self.clear_frame()
+        tk.Label(self.root, text="Your Flashcards", font=("Arial", 18)).pack(pady=10)
+        if not self.flashcards:
+            tk.Label(self.root, text="No flashcards created yet.", font=("Arial", 12)).pack(pady=5)
+        else:
+            for question, answer in self.flashcards.items():
+                tk.Label(self.root, text=f"Q: {question}", font=("Arial", 12)).pack(pady=2)
+                tk.Label(self.root, text=f"A: {answer}", font=("Arial", 12), fg="gray").pack(pady=2)
+        tk.Button(self.root, text="Back to Menu", command=self.GUI_menu).pack(pady=10)
+
+    def quiz_flashcards(self):
+        """Quiz the user."""
+        if not self.flashcards:
+            messagebox.showerror("Error", "No flashcards available for quizzing.")
+            return
+        self.clear_frame()
+        self.questions = list(self.flashcards.keys())
+        self.current_index = 0
+        self.correct_answers = 0
+        tk.Label(self.root, text="Quiz Yourself", font=("Arial", 18)).pack(pady=10)
+        self.question_label = tk.Label(self.root, text=self.questions[self.current_index], font=("Arial", 14))
+        self.question_label.pack(pady=10)
+        self.answer_entry = tk.Entry(self.root, width=50)
+        self.answer_entry.pack(pady=5)
+        tk.Button(self.root, text="Submit Answer", command=self.check_answer).pack(pady=5)
+        tk.Button(self.root, text="Back to Menu", command=self.GUI_menu).pack(pady=5)
+
+    def check_answer(self):
+        """Check the user's answer."""
+        user_answer = self.answer_entry.get().strip()
+        correct_answer = self.flashcards[self.questions[self.current_index]]
+        if user_answer.lower() == correct_answer.lower():
+            self.correct_answers += 1
+            messagebox.showinfo("Correct!", "Good job! That's correct.")
+        else:
+            messagebox.showerror("Incorrect", f"The correct answer was: {correct_answer}")
+        self.answer_entry.delete(0, tk.END)
+        self.current_index += 1
+        if self.current_index < len(self.questions):
+            self.question_label.config(text=self.questions[self.current_index])
+        else:
+            self.show_score()
+
+    def show_score(self):
+        """Display quiz score."""
+        messagebox.showinfo("Quiz Complete", f"You scored {self.correct_answers}/{len(self.questions)}!")
+        self.GUI_menu()
+
+    def confirm_reset(self):
+        """Confirm before resetting flashcards."""
+        if messagebox.askyesno("Confirm Reset", "Are you sure you want to delete all flashcards?"):
+            self.reset_flashcards()
+            messagebox.showinfo("Reset", "All flashcards have been deleted.")
+            self.GUI_menu()
+
+    def clear_frame(self):
+        """Clear the current screen."""
+        for widget in self.root.winfo_children():
+            widget.destroy()
+    
+class ToDoApp(mainWindow):
+    def __init__(self, title, root_window, mainApp):
+        self.root = root_window
+        self.mainApp = mainApp
+        self.root.title(title)
+        self.current_frame = ttk.Frame(self.root)
+        self.current_frame.pack(fill='both')
+        self.style = ttk.Style()
+        self.tasks = []
+
+
+        self.add_task_label = ttk.Label(self.current_frame, text="Enter a New Task:", font=('Arial', 20, 'bold'))
+        self.add_task_label.pack(padx=10, pady=(20, 5), anchor="w")
+
+        self.task_entry = ttk.Entry(self.current_frame, width=50)
+        self.task_entry.pack(padx=10, pady=10, fill="x")  # Fill horizontally
+
+        # Add Task and Edit Task buttons to the right of the entry bar
+        button_frame = ttk.Frame(self.current_frame)  # Create a frame for the buttons
+        button_frame.pack(padx=10, pady=5, fill="x")
+
+        self.add_button = tk.Button(button_frame, text="Add Task", command=self.add_task)
+        self.add_button.pack(side="left", padx=5, pady=10)
+
+        self.edit_button = tk.Button(button_frame, text="Edit Task", command=self.edit_task)
+        self.edit_button.pack(side="left", padx=5, pady=10)
+
+        # Listbox below the entry bar
+        self.task_listbox = tk.Listbox(self.current_frame, width=70, height=15, bg='green')
+        self.task_listbox.pack(padx=10, pady=10, fill="x")  # Fill horizontally
+
+        # Delete Task and Quit buttons at the bottom
+        button_frame_bottom = ttk.Frame(self.current_frame)  # Another frame for bottom buttons
+        button_frame_bottom.pack(padx=30, pady=5, anchor='s', expand=True)
+
+        self.delete_button = tk.Button(button_frame_bottom, text="Delete Task", command=self.delete_task)
+        self.delete_button.pack(side="left", anchor='center', padx=10, pady=10)
+
+        self.quit_button = tk.Button(button_frame_bottom, text="Quit", command=self.return_to_main_menu)
+        self.quit_button.pack(side='left', anchor='center', padx=10, pady=10)
+    
+    def return_to_main_menu(self):
+        
+        self.mainApp.clear_frame()
+        self.mainApp.menuGUI()
+
+    def add_task(self): #Add Task
+        task = self.task_entry.get().strip()
+        if task:
+            self.tasks.append(task)
+            self.task_entry.delete(0, tk.END)
+            self.update_task_listbox()
+        else:
+            messagebox.showwarning("Input Error", "Task cannot be empty!")
+
+    def delete_task(self): #Delete Task
+        try:
+            selected_task_index = self.task_listbox.curselection()[0]
+            selected_task = self.tasks[selected_task_index]
+
+            # Confirmation dialog
+            confirm = messagebox.askyesno(
+                "Confirm Delete",
+                f"Are you sure you want to delete the task: '{selected_task}'?"
+            )
+            if confirm:
+                self.tasks.pop(selected_task_index)
+                self.update_task_listbox()
+                messagebox.showinfo("Task Deleted", f"Task '{selected_task}' has been removed.")
+        except IndexError:
+            messagebox.showwarning("Selection Error", "Please select a task to delete!")
+
+    def edit_task(self): #Edit Task
+        try:
+            selected_task_index = self.task_listbox.curselection()[0]
+            selected_task = self.tasks[selected_task_index]
+
+            new_task = self.task_entry.get().strip()
+            if new_task:
+                # Confirmation dialog
+                confirm = messagebox.askyesno(
+                    "Confirm Edit",
+                    f"Are you sure you want to change '{selected_task}' to '{new_task}'?"
+                )
+                if confirm:
+                    self.tasks[selected_task_index] = new_task
+                    self.task_entry.delete(0, tk.END)
+                    self.update_task_listbox()
+                    messagebox.showinfo("Task Edited", f"Task updated to: '{new_task}'")
+            else:
+                messagebox.showwarning("Input Error", "Task cannot be empty!")
+        except IndexError:
+            messagebox.showwarning("Selection Error", "Please select a task to edit!")
+
+    def update_task_listbox(self):
+        self.task_listbox.delete(0, tk.END)
+        for index, task in enumerate(self.tasks, start=1):
+            self.task_listbox.insert(tk.END, f"#{index}: {task}")
+
+class Timer(mainWindow):
+    def __init__(self):
+        self.running = False
+        self.remaining_time = 0
+
+    def countdown(self, root, label):
+        try:
+            while self.remaining_time > 0 and self.running:
+                minutes_left, seconds_left = divmod(self.remaining_time, 60)
+                label.config(text=f"{minutes_left:02} : {seconds_left:02}")
+                root.update()
+                time.sleep(1)  # Pause for a second
+                self.remaining_time -= 1
+
+            # When the countdown finishes, go to the next cycle
+            if self.remaining_time == 0 and self.running:
+                self.next_cycle()
+
+        except Exception as e:
+            label.config(text="Error")
+            print(f"An error occurred: {e}")
+
+class Pomodorotimer(Timer):
+    def __init__(self, title, root_window, mainApp):
+        super().__init__()
+        self.root = root_window
+        self.mainApp = mainApp
+        self.root.title(title)
+        self.current_frame = ttk.Frame(self.root)
+        self.current_frame.pack(fill='both')
+
+        # Timer configuration
+        self.cycles = 4
+        self.current_cycle = 0
+
+        # GUI setup
+        self.label = ttk.Label(self.current_frame, text="00 : 00", font=("Gabrielelana", 50), bootstyle='primary')
+        self.label.pack(pady=20)
+
+        self.input_duration = tk.Entry(self.current_frame, font=("Gabrielelana", 20), justify="center")
+        self.input_duration.pack(pady=20)
+        
+        self.work_duration_label = ttk.Label(self.current_frame, text="Work Duration(min)", font=("Times New Roman", 20), bootstyle='primary')
+        self.work_duration_label.pack()
+
+        self.input_shortbreak = tk.Entry(self.current_frame, font=("Gabrielelana", 20), justify="center")
+        self.input_shortbreak.pack(pady=20)
+        
+        self.short_break_label = ttk.Label(self.current_frame, text="Short Break", font=("Times New Roman", 20), bootstyle='primary')
+        self.short_break_label.pack()
+
+        self.input_longbreak = tk.Entry(self.current_frame, font=("Gabrielelana", 20), justify="center")
+        self.input_longbreak.pack(pady=20)
+        
+        self.long_break_label = ttk.Label(self.current_frame, text="Long Break", font=("Times New Roman", 20), bootstyle='primary')
+        self.long_break_label.pack()
+
+        self.skip = tk.Button(self.current_frame, text="Skip", font=("Gabrielelana", 20), command=self.timer_skip, bg="white", fg="#FF6347")
+        self.skip.pack(pady=10)
+
+        self.start = tk.Button(self.current_frame, text="Start", font=("Gabrielelana", 20), command=self.timer_start, bg="white", fg="#FF6347")
+        self.start.pack(pady=10)
+
+        self.reset = tk.Button(self.current_frame, text="Reset", font=("Gabrielelana", 20), command=self.timer_reset, bg="white", fg="#FF6347")
+        self.reset.pack(pady=10)
+    
+    def timer_start(self):
+        if not self.running:
+            if self.update():
+                self.running = True
+                self.start.config(text="Stop", command=self.timer_pause)
+                self.run()
+            else:
+                print("Invalid Input")
+        else:
+            self.running = False
+            self.start.config(text="Resume", command=self.timer_resume)
+
+    def timer_pause(self):
+        self.running = False
+        self.start.config(text="Resume", command=self.timer_resume)
+
+    def timer_resume(self):
+        self.running = True
+        self.start.config(text="Stop", command=self.timer_pause)
+
+        # Resume countdown from the remaining time
+        self.countdown(self.root, self.label)
+
+    def timer_reset(self):
+        self.running = False
+        self.current_cycle = 0
+        self.remaining_time = 0  # Reset remaining time
+        self.label.config(text="00 : 00", bg="#FF6347")
+        self.root.config(bg="#FF6347")
+        self.start.config(fg="#FF6347")
+        self.skip.config(fg="#FF6347")
+        self.reset.config(fg="#FF6347")
+        self.work_duration_label.config(fg="white", bg="#FF6347")
+        self.short_break_label.config(fg="white", bg="#FF6347")
+        self.long_break_label.config(fg="white", bg="#FF6347")
+        self.start.config(text="Start", command=self.timer_start)
+        self.input_duration.delete(0, tk.END)
+        self.input_shortbreak.delete(0, tk.END)
+        self.input_longbreak.delete(0, tk.END)
+    
+    def timer_skip(self):
+        if self.running:
+            self.running = False
+            self.start.config(text="Start", command=self.timer_resume)
+            self.work_duration_label.config(fg="white", bg="#FF6347")
+            self.short_break_label.config(fg="white", bg="#FF6347")
+            self.long_break_label.config(fg="white", bg="#FF6347")
+        self.next_cycle()
+
+    def next_cycle(self):
+        if self.current_cycle >= 4:  
+            self.current_cycle = 0
+            self.label.config(bg="orange")
+            self.root.config(bg="orange")
+            self.work_duration_label.config(fg="white", bg="orange")
+            self.short_break_label.config(fg="white", bg="orange")
+            self.long_break_label.config(fg="white",bg ="orange")
+            self.start.config(fg="orange")
+            self.skip.config(fg="orange")
+            self.reset.config(fg="orange")
+            self.label.config(text="End! Reset or Start", bg="orange", fg="white")
+            self.start.config(text="Start", command=self.timer_start)
+            return
+
+        if self.current_cycle == 0:
+            # First work session
+            self.session_type = "Work Duration"
+            self.label.config(fg="white" , bg="#FF6347", text=f"{self.duration:02}")
+            self.root.config(bg="#FF6347")                
+            self.work_duration_label.config(fg="white", bg="#FF6347")
+            self.short_break_label.config(fg="white", bg="#FF6347")
+            self.long_break_label.config(fg="white", bg="#FF6347")
+            self.start.config(fg="#FF6347")
+            self.skip.config(fg="#FF6347")
+            self.reset.config(fg="#FF6347")
+            self.remaining_time = self.duration * 60
+
+        elif self.current_cycle == 1:
+            # Short break
+            self.session_type = "Short Break"
+            self.label.config(fg="white", bg="#87CEEB", text=f"{self.shortbreak:02} : 00")
+            self.root.config(bg="#87CEEB")
+            self.work_duration_label.config(fg="white", bg="#87CEEB")
+            self.short_break_label.config(fg="white", bg="#87CEEB")
+            self.long_break_label.config(fg="white", bg="#87CEEB")
+            self.start.config(fg="#87CEEB")
+            self.skip.config(fg="#87CEEB")
+            self.reset.config(fg="#87CEEB")
+            self.remaining_time = self.shortbreak * 60
+
+        elif self.current_cycle == 2:
+            # Second work session
+            self.session_type = "Work Duration"
+            self.label.config(fg="white", bg="#FF6347", text=f"{self.duration:02} : 00")
+            self.root.config(bg="#FF6347")
+            self.work_duration_label.config(fg="white", bg="#FF6347")
+            self.short_break_label.config(fg="white", bg="#FF6347")
+            self.long_break_label.config(fg="white", bg="#FF6347")
+            self.start.config(fg="#FF6347")
+            self.skip.config(fg="#FF6347")
+            self.reset.config(fg="#FF6347")     
+            self.remaining_time = self.duration * 60
+
+        elif self.current_cycle == 3:
+            # Long break
+            self.session_type = "Long Break"  
+            self.label.config(fg="white", bg="#32CD32", text=f"{self.longbreak:02} : 00")
+            self.root.config(bg="#32CD32")
+            self.work_duration_label.config(fg="white", bg="#32CD32")
+            self.short_break_label.config(fg="white", bg="#32CD32")
+            self.long_break_label.config(fg="white", bg="#32CD32")
+            self.start.config(fg="#32CD32")
+            self.skip.config(fg="#32CD32")
+            self.reset.config(fg="#32CD32")
+            self.remaining_time = self.longbreak * 60
+
+        self.current_cycle += 1
+
+        # Start the countdown for the next session
+        self.countdown(self.root, self.label)
+
+    def run(self):
+        if self.running:
+            self.next_cycle()  # Start or continue the cycle
+
+    def update(self):
+        try:
+            self.duration = int(self.input_duration.get())
+            self.shortbreak = int(self.input_shortbreak.get())
+            self.longbreak = int(self.input_longbreak.get())
+            if self.duration <= 0 or self.shortbreak <= 0 or self.longbreak <= 0:
+                raise Exception("Duration must be a positive integer")
+            return True  # Validation passed
+        except Exception as e:
+            self.label.config(bg="red")
+            self.root.config(bg="red")
+            self.start.config(fg="red")
+            self.skip.config(fg="red")
+            self.reset.config(fg="red")
+            self.work_duration_label.config(fg="white", bg="red")
+            self.short_break_label.config(fg="white", bg="red")
+            self.long_break_label.config(fg="white", bg="red")
+            self.label.config(text="Invalid Input")
+            print(f"Error: {e}")
+            return False  # Validation failed
+
+    def log_session(self, session_type):
+        try:
+            with open("pomodoro_log.txt", "a") as file:
+                file.write(f"Cycle {self.current_cycle}: {session_type}\n")
+        except Exception as e:
+            print(f"Failed to log session: {e}")
+
+if __name__ == "__main__":
+    app = mainApp(title='QuakTask')
+    app.run()
