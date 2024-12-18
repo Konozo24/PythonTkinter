@@ -27,7 +27,12 @@ class mainWindow:
         
 
     def clear_frame(self):
-        """Remove the current frame's widgets."""
+        """
+        Clear all widgets from the current frame and main window.
+
+        - Destroys all widgets in the `current_frame`, if it exists.
+        - Ensures no remaining widgets remain in the main window.
+        """
         
         if hasattr(self, 'current_frame') and self.current_frame is not None:
             for widget in self.current_frame.winfo_children():
@@ -42,16 +47,24 @@ class mainWindow:
             print(widget)
             widget.destroy()
         
-
+    # Start the main application loop
     def run(self):
         self.root.mainloop()
 
+
 class mainApp(mainWindow):
+
     def __init__(self, title):
         super().__init__(title)
         self.menuGUI()
 
     def menuGUI(self):
+        """
+        Set up and display the main menu.
+
+        - Adds navigation buttons to access different modules of the application.
+        - Ensures buttons are styled and spaced consistently.
+        """
         self.current_frame = ttk.Labelframe(self.root, text="Main Menu", padding=(100, 100))
         self.current_frame.pack(pady=10, padx=10, fill='both', expand=True)
         
@@ -72,40 +85,45 @@ class mainApp(mainWindow):
         self.button5 = ttk.Button(self.current_frame, text='Exit', bootstyle='danger', 
                                   command=self.root.quit).pack(ipadx=100, ipady=10, fill=None, expand=True)
 
+
+    # Open the Expense Tracker in a new window
     def open_expense_tracker(self):
-        # Open the Expense Tracker in a new window
-        
+
         self.clear_frame()
         Expense = ExpenseTracker("Expense Tracker", self.root, self)
         self.current_frame = Expense.current_frame
 
+    # Open the Expense Tracker in a new window
     def open_flashcard(self):
-        # Open the Expense Tracker in a new window
         
         self.clear_frame()
         Flashcard = FlashcardApp("Flashcard", self.root, self)
         self.current_frame = Flashcard.current_frame
 
+    # Open the To-Do List in a new window
     def open_ToDoList(self):
-        # Open the To-Do List in a new window
         
         self.clear_frame()
         ToDoList = ToDoApp("Flashcard", self.root, self)
         self.current_frame = ToDoList.current_frame
 
+    # Open the Expense Tracker in a new window
     def open_PomodoroTimer(self):
-        # Open the Expense Tracker in a new window
         
         self.clear_frame()
         PomodoroTimer = Pomodorotimer("Pomodoro Timer", self.root, self)
         self.current_frame = PomodoroTimer.current_frame
         
 
-
-
-
 class ExpenseTracker(mainWindow):
-    
+    """
+    ExpenseTracker is a module that enables users to track and manage expenses via a GUI
+
+    Responsibilities:
+    - Allows users to add, visualize, save, and load expenses.
+    - Implements a structured GUI for input and visualization.
+    - Ensures proper file handling and data validation.
+    """
     def __init__(self, title, root_window, mainApp):
 
         self.root = root_window
@@ -114,7 +132,7 @@ class ExpenseTracker(mainWindow):
         self.current_frame = ttk.Frame(self.root)
         self.current_frame.pack(fill='both')
         
-        #Initialise expense data and categories
+        # Initialise expense data and categories
         self.expense_df = pd.DataFrame(columns=['Date', 'Amount', 'Category', 'Description'])
         self.categories = ["Food", "Transportation", "Utilities", "Entertainment", "Others"]
 
@@ -122,45 +140,45 @@ class ExpenseTracker(mainWindow):
         self.createDirectories()
         
 
-    #Create directory for new expense file
+    # Create directory for new expense file if it doesn't exist
     def createDirectories(self):
         if not os.path.exists("expense_data"):
             os.makedirs("expense_data")
 
-    #Set up GUI components
+    # Set up GUI components
     def setupUi(self):
         
-        #InputFrame for input widgets
+        # Frame for input widgets
         inputFrame = ttk.LabelFrame(self.root, text= 'Add Expense', bootstyle='info', padding=(10,10))
         inputFrame.pack(padx=10, pady=10, fill='x')
 
-        #Input for Amount
+        # Input fields for expense details
         self.amountLabel = ttk.Label(inputFrame, text= 'Amount: ').grid(row=0, column=0, sticky= 'w',padx=5, pady=5)
         self.amountEntry = ttk.Entry(inputFrame, width=20, style="info.TEntry")
         self.amountEntry.grid(row=0, column=1, padx=5, pady=5)
 
-        #Category label
+        
         self.categoryLabel = ttk.Label(inputFrame, text= 'Category: ').grid(row=0, column=2, sticky= 'w',padx=5, pady=5)
         self.categoryVar = tk.StringVar()
         self.categoryCombo = ttk.Combobox(inputFrame, bootstyle='info', textvariable=self.categoryVar, values=self.categories)
         self.categoryCombo.grid(row=0, column=3, padx=5, pady=5)
         self.categoryCombo.set("Select Category")
 
-        #Date picker
+        
         self.dateFrame = ttk.Label(inputFrame, text= 'Date: ').grid(row=1, column=0, sticky='w',padx=5, pady=5)
         self.dateEntry = tb.DateEntry(inputFrame, bootstyle='info', firstweekday=0)
         self.dateEntry.grid(row=1, column=1, padx=5, pady=5)
 
-        #Description field
+        
         self.descriptionLabel = ttk.Label(inputFrame, text= 'Description: ').grid(row=2, column=0, sticky= 'w', padx=5, pady=5)
         self.descriptionEntry = ttk.Entry(inputFrame, width=40, bootstyle='info')
         self.descriptionEntry.grid(row=2, column=1, columnspan=1, padx=5, pady=5)
 
-        #Add expense button
+        # Button to add an expense entry
         add_Button = ttk.Button(inputFrame, text='Add Expense', bootstyle='success', command = self.add_Expense)
         add_Button.grid(row=3, column=1, columnspan=2, pady=10)
 
-        #Expenses Treeview
+        # Treeview for displaying expense entries
         self.tree = ttk.Treeview(self.root, columns=("Date", "Amount", "Category", "Description"), bootstyle='info', show="headings")
         self.tree.heading("Date", text="Date")
         self.tree.heading("Amount", text="Amount")
@@ -174,43 +192,50 @@ class ExpenseTracker(mainWindow):
 
         self.tree.pack(padx=10, pady=10, expand=True, fill='both')
 
-        #Button frame for control buttons
+        # Button frame for control buttons
         buttonFrame = ttk.Frame(self.root)
         buttonFrame.pack(padx=10, pady=10)
 
-        visualiseButton = ttk.Button(buttonFrame, text='Visualise Expenses', bootstyle='info', command=self.visualise_Expenses) #Visualise Expenses Button
+        visualiseButton = ttk.Button(buttonFrame, text='Visualise Expenses', bootstyle='info', command=self.visualise_Expenses)
         visualiseButton.pack(side=tk.LEFT, padx=10)
-        saveButton = ttk.Button(buttonFrame, text='Save Expenses', bootstyle='success', command=self.save_Expenses) #Save Expenses Button
+        saveButton = ttk.Button(buttonFrame, text='Save Expenses', bootstyle='success', command=self.save_Expenses) 
         saveButton.pack(side=tk.LEFT, padx=10)
-        loadButton = ttk.Button(buttonFrame, text='Load Expenses', bootstyle='info', command=self.load_Expenses) #Load Expenses Button
+        loadButton = ttk.Button(buttonFrame, text='Load Expenses', bootstyle='info', command=self.load_Expenses)
         loadButton.pack(side=tk.LEFT, padx=10)
-        closeButton = ttk.Button(buttonFrame, text="Close", command=self.return_to_main_menu)
+        closeButton = ttk.Button(buttonFrame, text="Close", command=self.return_to_main_menu)  
         closeButton.pack(side=tk.LEFT, padx=10)
 
-    #Return to Main Menu
+    # Return to Main Menu
     def return_to_main_menu(self):
         
         self.mainApp.clear_frame()
         self.mainApp.menuGUI()
         
 
-    #Add a new expense entry
     def add_Expense(self):
+        """
+        Add a new expense entry to the tracker.
+
+        - Retrieve input values for amount, category, description, and date.
+        - Validates the inputs to ensure correctness.
+        - Appends the new entry to the DataFrame and updates the GUI.
+        - Raises a ValueError for invalid inputs.
+        """
         try:    
-            #Get input values
+            # Retrieve input values
             amount = self.amountEntry.get()
             category = self.categoryVar.get()
             description = self.descriptionEntry.get()
             date = self.dateEntry.entry.get()
 
-            #Input validation
+            # Input validation
             if category == "Select Category":
                 raise ValueError("Please select a category")
             
             if amount is None or amount.strip() == '':
                 raise ValueError("Please input an amount")
             
-            #Convert amount to float and add inputs to Dataframe 
+            # Convert amount to float and add inputs to Dataframe 
             amount = float(amount)
             display_date = pd.to_datetime(date)
             new_Expense = pd.DataFrame({
@@ -220,14 +245,11 @@ class ExpenseTracker(mainWindow):
                 "Description": [description]
             })
 
-            
-
             #Add new expense to current expense dataframe
             self.expense_df = pd.concat([self.expense_df, new_Expense], ignore_index=True)
-            
+
             self.expense_df = self.expense_df.sort_values('Date')
             
-
             #Clear the treeview
             for record in self.tree.get_children():
                 self.tree.delete(record)
@@ -239,7 +261,7 @@ class ExpenseTracker(mainWindow):
                                                                  row['Category'], 
                                                                  row['Description']))
             
-            #Clear input fields
+            #Reset input fields
             self.amountEntry.delete(0, tk.END)
             self.categoryCombo.set("Select Category")
             self.descriptionEntry.delete(0, tk.END)
@@ -247,18 +269,20 @@ class ExpenseTracker(mainWindow):
         except ValueError as e:
             messagebox.showerror(title='Input Error', message=f'{str(e)}')
 
-    #Visualise expenses as piechart
+    
     def visualise_Expenses(self):
+        """
+        Visualize expenses using a pie chart.
+
+        - Groups expenses by category and calculates the total amount for each category.
+        - Uses matplotlib to display a pie chart with percentages and a title.
+        """
         
         #Check existence of any category
-        
-        
         if self.expense_df.empty:
             messagebox.showerror(title='Visualisation Error', message=f'Cant visualise expenses')
             return
-            
         
-         
         #Set visual style 
         plt.style.use("fivethirtyeight")
 
@@ -291,16 +315,26 @@ class ExpenseTracker(mainWindow):
 
     #Load expenses from CSV file
     def load_Expenses(self):
+        """
+    Load expenses from an external CSV file into the tracker.
+
+    - Prompts the user for a file name using a dialog box.
+    - Reads the specified CSV file and parses its contents into a DataFrame.
+    - Updates the treeview widget with the loaded expense entries.
+    - Validates that the file exists and handles errors gracefully.
+    - Raises a Load Error for invalid file name.
+        """
+        
         try:
-            #Obtain file name and path and convert 'Dtte' column into datetime object
+            # Prompt the user to enter the file name of the CSV file
             file_name = simpledialog.askstring('Input File Name', "Enter your file name: ", parent=self.root)   
             file_path = f"expense_data/{file_name}" 
 
             if not file_name:
                 return
             
+            # Load the file into a DataFrame, ensuring the 'Date' column is parsed correctly
             loaded_file = pd.read_csv(file_path, parse_dates= ['Date'])
-            
             
         
             #Update expenses Dataframe
@@ -330,12 +364,14 @@ class FlashcardBase(mainWindow):
         
         self.flashcards = {}
 
+
     def add_flashcard(self, question, answer):
         """Add a flashcard to the collection."""
         if question in self.flashcards:
             return False  # Indicates a duplicate
         self.flashcards[question] = answer
         return True
+
 
     def reset_flashcards(self):
         """Clear all flashcards."""
@@ -356,6 +392,7 @@ class FlashcardApp(FlashcardBase):
         
         self.GUI_menu()
 
+
     def return_to_main_menu(self):
         self.clear_frame()
         self.mainApp.menuGUI()
@@ -370,6 +407,7 @@ class FlashcardApp(FlashcardBase):
         tk.Button(self.root, text="Quiz Yourself", command=self.quiz_flashcards, padx=36, pady=10).pack(pady=5)
         tk.Button(self.root, text="Reset Flashcards", command=self.confirm_reset, padx=24, pady=10).pack(pady=5)
         tk.Button(self.root, text="Exit", command=self.return_to_main_menu, padx=25, pady=10).pack(pady=5)
+
 
     def create_flashcards(self):
         """Allows the user to create flashcards."""
@@ -387,6 +425,7 @@ class FlashcardApp(FlashcardBase):
         tk.Button(self.root, text="Add Flashcard", command=self.process_add_flashcard).pack(pady=5)
         tk.Button(self.root, text="Back to Menu", command=self.GUI_menu).pack(pady=5)
 
+
     def process_add_flashcard(self):
         """Handle adding a flashcard."""
         question = self.question_entry.get().strip()
@@ -401,6 +440,7 @@ class FlashcardApp(FlashcardBase):
         else:
             messagebox.showerror("Error", "Please fill in both fields.")
 
+
     def view_flashcards(self):
         """Display all flashcards."""
         self.clear_frame()
@@ -412,6 +452,7 @@ class FlashcardApp(FlashcardBase):
                 tk.Label(self.root, text=f"Q: {question}", font=("Arial", 12)).pack(pady=2)
                 tk.Label(self.root, text=f"A: {answer}", font=("Arial", 12), fg="gray").pack(pady=2)
         tk.Button(self.root, text="Back to Menu", command=self.GUI_menu).pack(pady=10)
+
 
     def quiz_flashcards(self):
         """Quiz the user."""
@@ -430,6 +471,7 @@ class FlashcardApp(FlashcardBase):
         tk.Button(self.root, text="Submit Answer", command=self.check_answer).pack(pady=5)
         tk.Button(self.root, text="Back to Menu", command=self.GUI_menu).pack(pady=5)
 
+
     def check_answer(self):
         """Check the user's answer."""
         user_answer = self.answer_entry.get().strip()
@@ -446,10 +488,12 @@ class FlashcardApp(FlashcardBase):
         else:
             self.show_score()
 
+
     def show_score(self):
         """Display quiz score."""
         messagebox.showinfo("Quiz Complete", f"You scored {self.correct_answers}/{len(self.questions)}!")
         self.GUI_menu()
+
 
     def confirm_reset(self):
         """Confirm before resetting flashcards."""
@@ -458,11 +502,13 @@ class FlashcardApp(FlashcardBase):
             messagebox.showinfo("Reset", "All flashcards have been deleted.")
             self.GUI_menu()
 
+
     def clear_frame(self):
         """Clear the current screen."""
         for widget in self.root.winfo_children():
             widget.destroy()
     
+
 class ToDoApp(mainWindow):
     def __init__(self, title, root_window, mainApp):
         self.root = root_window
@@ -475,6 +521,7 @@ class ToDoApp(mainWindow):
 
         self.GUI_menu()
     
+
     def GUI_menu(self):
         self.add_task_label = ttk.Label(self.current_frame, text="Enter a New Task:", font=('Arial', 25, 'bold'), style='primary.TLabel')
         self.add_task_label.pack(padx=10, pady=10, anchor="w")
@@ -516,6 +563,7 @@ class ToDoApp(mainWindow):
         self.mainApp.clear_frame()
         self.mainApp.menuGUI()
 
+
     def add_task(self): #Add Task
         task = self.task_entry.get()
         if task:
@@ -526,6 +574,7 @@ class ToDoApp(mainWindow):
             
         else:
             messagebox.showwarning("Input Error", "Task cannot be empty!")
+
 
     def delete_task(self): #Delete Task
         try:
@@ -546,6 +595,7 @@ class ToDoApp(mainWindow):
 
         except IndexError:
             messagebox.showwarning("Selection Error", "Please select a task to delete!")
+
 
     def edit_task(self): #Edit Task
         try:
@@ -571,6 +621,7 @@ class ToDoApp(mainWindow):
         except IndexError:
             messagebox.showwarning("Selection Error", "Please select a task to edit!")
 
+
     def update_task_listbox(self):
          # Clear Treeview
         for record in self.task_treeview.get_children():
@@ -580,10 +631,12 @@ class ToDoApp(mainWindow):
         for index, task in enumerate(self.tasks, start=1):
             self.task_treeview.insert("", "end", values=(index, task))
 
+
 class Timer(mainWindow):
     def __init__(self):
         self.running = False
         self.remaining_time = 0
+
 
     def countdown(self, root, label):
         try:
@@ -602,6 +655,7 @@ class Timer(mainWindow):
             label.config(text="Error")
             print(f"An error occurred: {e}")
 
+
 class Pomodorotimer(Timer):
     def __init__(self, title, root_window, mainApp):
         super().__init__()
@@ -616,8 +670,8 @@ class Pomodorotimer(Timer):
         self.current_cycle = 0
         self.pomodoro_count = 0
     
-
         self.setupGUI()
+
 
     def setupGUI(self):    # GUI setup 
         
@@ -677,15 +731,12 @@ class Pomodorotimer(Timer):
         self.pomodoro_count_label = tb.Label(main_container, font=("Helvetica", 15, "bold"), text="Pomodoros Completed: 0", bootstyle='danger')
         self.pomodoro_count_label.pack(pady=10)
 
-        
-
-
+    
     def return_to_main_menu(self):
 
         self.clear_frame()
         self.mainApp.menuGUI()    
 
-    
     
     def timer_start(self):
         if not self.running:
@@ -699,9 +750,11 @@ class Pomodorotimer(Timer):
             self.running = False
             self.start.config(text="Resume", command=self.timer_resume)
 
+
     def timer_pause(self):
         self.running = False
         self.start.config(text="Resume", command=self.timer_resume)
+
 
     def timer_resume(self):
         self.running = True
@@ -709,6 +762,7 @@ class Pomodorotimer(Timer):
 
         # Resume countdown from the remaining time
         self.countdown(self.root, self.label)
+
 
     def timer_reset(self):
         self.running = False
@@ -732,7 +786,7 @@ class Pomodorotimer(Timer):
         self.session_type_label.config(text='Current Session: None', bootstyle='danger')
 
     
-    # Ensure labels are reset visually (if needed)
+        # Ensure labels are reset visually (if needed)
         self.work_duration_label.config(text="Work Duration (min)")
         self.short_break_label.config(text="Short Break")
         self.long_break_label.config(text="Long Break")
@@ -740,10 +794,12 @@ class Pomodorotimer(Timer):
         self.input_shortbreak.delete(0, tk.END)
         self.input_longbreak.delete(0, tk.END)
     
+
     def timer_skip(self):
 
         # Prevent skipping at the end of cycle
-        if (self.current_cycle == 0) and (not self.session_type == 'Long Break' or not self.session_type == 'Work Duration' or not self.session_type == 'Short Break'):
+        if (self.current_cycle == 0) and (not self.session_type == 'Long Break' or not self.session_type == 'Work Duration' \
+                                          or not self.session_type == 'Short Break'):
             messagebox.showwarning(title='Skip Error', message='Press Start or Reset to continue the cycle!')
             return
 
@@ -754,6 +810,7 @@ class Pomodorotimer(Timer):
             self.short_break_label.config(bootstyle='primary')
             self.long_break_label.config(bootstyle='primary')
         self.next_cycle()
+
 
     def next_cycle(self):
         if self.current_cycle >= 4:  
@@ -779,7 +836,6 @@ class Pomodorotimer(Timer):
             self.session_type_label.config(text=f"Current Session: None")
             self.remaining_time = 0
             
-                
             return
 
         if self.current_cycle == 0:
@@ -857,9 +913,11 @@ class Pomodorotimer(Timer):
         # Start the countdown for the next session
         self.countdown(self.root, self.label)
 
+
     def run(self):
         if self.running:
             self.next_cycle()  # Start or continue the cycle
+
 
     def update(self):
         try:
@@ -871,6 +929,7 @@ class Pomodorotimer(Timer):
                 raise Exception("Duration must be a positive integer")
             
             return True  # Validation passed
+        
         except Exception as e:
             ui_elements = [
             self.current_frame, self.label, 
@@ -885,7 +944,6 @@ class Pomodorotimer(Timer):
             return False  # Validation failed
 
    
-
 if __name__ == "__main__":
     app = mainApp(title='QuakTask')
     app.run()
