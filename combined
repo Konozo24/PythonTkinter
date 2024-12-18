@@ -12,7 +12,7 @@ class mainWindow:
     def __init__(self, title):
         
         #Initialise main window
-        self.root = tb.Window()
+        self.root = tb.Window(themename='journal')
         self.root.style.theme_use('journal')
         self.root.title(title)
         self.current_frame = None
@@ -22,7 +22,8 @@ class mainWindow:
         y = (self.screenHeight - 750) // 2 
         self.window_size = f'{1000}x{750}+{x}+{y}'
         self.root.geometry(self.window_size)
-
+        
+        
         
 
     def clear_frame(self):
@@ -54,47 +55,47 @@ class mainApp(mainWindow):
         self.current_frame = ttk.Labelframe(self.root, text="Main Menu", padding=(100, 100))
         self.current_frame.pack(pady=10, padx=10, fill='both', expand=True)
         
-        titleLabel = ttk.Label(self.current_frame, text="Quaktask", font=("Arial", 40, "bold"))
+        titleLabel = ttk.Label(self.current_frame, text="Quaktask", bootstyle='primary',font=("Arial", 40, "bold"))
         titleLabel.pack(padx=10, pady=10)
-       
+        
         
         #Button for Main Menu
-    
+        self.current_frame.config(style='My.TFrame')
         self.button1 = ttk.Button(self.current_frame, text='Expense Tracker', bootstyle='info', 
-                                  command=self.open_expense_tracker).pack(padx=10, fill=None, expand=True)
+                                  command=self.open_expense_tracker).pack(ipadx=100, ipady=10, fill=None, expand=True)
         self.button2 = ttk.Button(self.current_frame, text='Flashcard Quizzer', bootstyle='info', 
-                                  command=self.open_flashcard).pack(padx=10, fill=None, expand=True)
+                                  command=self.open_flashcard).pack(ipadx=95, ipady=10, fill=None, expand=True)
         self.button3 = ttk.Button(self.current_frame, text='To-Do List', bootstyle='info', 
-                                  command=self.open_ToDoList).pack(padx=10, fill=None, expand=True)
+                                  command=self.open_ToDoList).pack(ipadx=119, ipady=10, fill=None, expand=True)
         self.button4 = ttk.Button(self.current_frame, text='Pomodoro Timer', bootstyle='info', 
-                                  command=self.open_PomodoroTimer).pack(padx=10, fill=None, expand=True)
+                                  command=self.open_PomodoroTimer).pack(ipadx=97, ipady=10, fill=None, expand=True)
         self.button5 = ttk.Button(self.current_frame, text='Exit', bootstyle='danger', 
-                                  command=self.root.quit).pack(padx=10, fill=None, expand=True)
+                                  command=self.root.quit).pack(ipadx=100, ipady=10, fill=None, expand=True)
 
     def open_expense_tracker(self):
         # Open the Expense Tracker in a new window
-        print("Opening Expense Tracker...")
+        
         self.clear_frame()
         Expense = ExpenseTracker("Expense Tracker", self.root, self)
         self.current_frame = Expense.current_frame
 
     def open_flashcard(self):
         # Open the Expense Tracker in a new window
-        print("Opening Flashcard Quizzer...")
+        
         self.clear_frame()
         Flashcard = FlashcardApp("Flashcard", self.root, self)
         self.current_frame = Flashcard.current_frame
 
     def open_ToDoList(self):
         # Open the To-Do List in a new window
-        print("Opening To Do List...")
+        
         self.clear_frame()
         ToDoList = ToDoApp("Flashcard", self.root, self)
         self.current_frame = ToDoList.current_frame
 
     def open_PomodoroTimer(self):
         # Open the Expense Tracker in a new window
-        print("Opening To Do List...")
+        
         self.clear_frame()
         PomodoroTimer = Pomodorotimer("Pomodoro Timer", self.root, self)
         self.current_frame = PomodoroTimer.current_frame
@@ -359,15 +360,16 @@ class FlashcardApp(FlashcardBase):
         self.clear_frame()
         self.mainApp.menuGUI()
 
+
     def GUI_menu(self):
         """Display the main menu."""
         self.clear_frame()
         tk.Label(self.root, text="Flashcard App", font=("Arial", 50)).pack(pady=50)
         tk.Button(self.root, text="Create Flashcards", command=self.create_flashcards, padx=20, pady=10).pack(pady=5)
-        tk.Button(self.root, text="View Flashcards", command=self.view_flashcards, padx=20, pady=10).pack(pady=5)
-        tk.Button(self.root, text="Quiz Yourself", command=self.quiz_flashcards, padx=20, pady=10).pack(pady=5)
-        tk.Button(self.root, text="Reset Flashcards", command=self.confirm_reset, padx=20, pady=10).pack(pady=5)
-        tk.Button(self.root, text="Exit", command=self.return_to_main_menu, padx=20, pady=10).pack(pady=5)
+        tk.Button(self.root, text="View Flashcards", command=self.view_flashcards, padx=27, pady=10).pack(pady=5)
+        tk.Button(self.root, text="Quiz Yourself", command=self.quiz_flashcards, padx=36, pady=10).pack(pady=5)
+        tk.Button(self.root, text="Reset Flashcards", command=self.confirm_reset, padx=24, pady=10).pack(pady=5)
+        tk.Button(self.root, text="Exit", command=self.return_to_main_menu, padx=25, pady=10).pack(pady=5)
 
     def create_flashcards(self):
         """Allows the user to create flashcards."""
@@ -467,88 +469,102 @@ class ToDoApp(mainWindow):
         self.mainApp = mainApp
         self.root.title(title)
         self.current_frame = ttk.Frame(self.root)
-        self.current_frame.pack(fill='both')
+        self.current_frame.pack(fill='both', expand=True)
         self.style = ttk.Style()
         self.tasks = []
 
+        self.GUI_menu()
+    
+    def GUI_menu(self):
+        self.add_task_label = ttk.Label(self.current_frame, text="Enter a New Task:", font=('Arial', 25, 'bold'), style='primary.TLabel')
+        self.add_task_label.pack(padx=10, pady=10, anchor="w")
 
-        self.add_task_label = ttk.Label(self.current_frame, text="Enter a New Task:", font=('Arial', 20, 'bold'))
-        self.add_task_label.pack(padx=10, pady=(20, 5), anchor="w")
-
-        self.task_entry = ttk.Entry(self.current_frame, width=50)
-        self.task_entry.pack(padx=10, pady=10, fill="x")  # Fill horizontally
+        self.task_entry = ttk.Entry(self.current_frame, width=50, style='primary.TEntry')
+        self.task_entry.pack(ipady=10,padx=10, fill="x")  # Fill horizontally
 
         # Add Task and Edit Task buttons to the right of the entry bar
         button_frame = ttk.Frame(self.current_frame)  # Create a frame for the buttons
-        button_frame.pack(padx=10, pady=5, fill="x")
+        button_frame.pack(padx=10, fill="both", expand=True)
 
-        self.add_button = tk.Button(button_frame, text="Add Task", command=self.add_task)
-        self.add_button.pack(side="left", padx=5, pady=10)
+        self.add_button = ttk.Button(button_frame, text="Add Task", command=self.add_task, bootstyle='success')
+        self.add_button.pack(side="left", padx=5)
 
-        self.edit_button = tk.Button(button_frame, text="Edit Task", command=self.edit_task)
-        self.edit_button.pack(side="left", padx=5, pady=10)
+        self.edit_button = ttk.Button(button_frame, text="Edit Task", command=self.edit_task, bootstyle='info')
+        self.edit_button.pack(side="left", padx=5)
 
         # Listbox below the entry bar
-        self.task_listbox = tk.Listbox(self.current_frame, width=70, height=15, bg='green')
-        self.task_listbox.pack(padx=10, pady=10, fill="x")  # Fill horizontally
+        self.task_treeview = ttk.Treeview(self.current_frame, columns=("ID", "Tasks"), show="headings", style='primary.Treeview')
+        self.task_treeview.heading("ID", text="ID")
+        self.task_treeview.heading("Tasks", text="Tasks")
+        self.task_treeview.column("ID", anchor="center", width=20)
+        self.task_treeview.column("Tasks", anchor="center", width=120)
+        self.task_treeview.pack(padx=10, fill="both", expand=True)  # Fill horizontally
 
         # Delete Task and Quit buttons at the bottom
         button_frame_bottom = ttk.Frame(self.current_frame)  # Another frame for bottom buttons
-        button_frame_bottom.pack(padx=30, pady=5, anchor='s', expand=True)
+        button_frame_bottom.pack(padx=30, pady=5, anchor='s',expand=True)
 
         self.delete_button = tk.Button(button_frame_bottom, text="Delete Task", command=self.delete_task)
-        self.delete_button.pack(side="left", anchor='center', padx=10, pady=10)
+        self.delete_button.pack(side="left", anchor='center', padx=10, pady=10, ipadx=10)
 
         self.quit_button = tk.Button(button_frame_bottom, text="Quit", command=self.return_to_main_menu)
-        self.quit_button.pack(side='left', anchor='center', padx=10, pady=10)
-    
+        self.quit_button.pack(side='left', anchor='center', padx=10, pady=10, ipadx=15)
+
+
     def return_to_main_menu(self):
         
         self.mainApp.clear_frame()
         self.mainApp.menuGUI()
 
     def add_task(self): #Add Task
-        task = self.task_entry.get().strip()
+        task = self.task_entry.get()
         if task:
             self.tasks.append(task)
+            self.task_treeview.insert("", "end", values=(len(self.tasks), task))
             self.task_entry.delete(0, tk.END)
-            self.update_task_listbox()
+
+            
         else:
             messagebox.showwarning("Input Error", "Task cannot be empty!")
 
     def delete_task(self): #Delete Task
         try:
-            selected_task_index = self.task_listbox.curselection()[0]
-            selected_task = self.tasks[selected_task_index]
+            selected_task = self.task_treeview.selection()[0]  # Get the selected item
+            task_values = self.task_treeview.item(selected_task, 'values')  # Get the task details
+            task_id = int(task_values[0])  # Extract task ID
+            task_name = task_values[1]
 
             # Confirmation dialog
             confirm = messagebox.askyesno(
                 "Confirm Delete",
-                f"Are you sure you want to delete the task: '{selected_task}'?"
+                f"Are you sure you want to delete the task: '{task_name}'?"
             )
             if confirm:
-                self.tasks.pop(selected_task_index)
-                self.update_task_listbox()
-                messagebox.showinfo("Task Deleted", f"Task '{selected_task}' has been removed.")
+                self.tasks.pop(task_id - 1)
+                self.task_treeview.delete(selected_task)
+                messagebox.showinfo("Task Deleted", f"Task '{task_name}' has been removed.")
+
         except IndexError:
             messagebox.showwarning("Selection Error", "Please select a task to delete!")
 
     def edit_task(self): #Edit Task
         try:
-            selected_task_index = self.task_listbox.curselection()[0]
-            selected_task = self.tasks[selected_task_index]
+            selected_item = self.task_treeview.selection()[0]  # Get the selected item
+            task_values = self.task_treeview.item(selected_item, 'values')  # Get the task details
+            task_id = int(task_values[0])  # Extract task ID
+            old_task = task_values[1]
 
             new_task = self.task_entry.get().strip()
             if new_task:
                 # Confirmation dialog
                 confirm = messagebox.askyesno(
                     "Confirm Edit",
-                    f"Are you sure you want to change '{selected_task}' to '{new_task}'?"
+                    f"Are you sure you want to change '{old_task}' to '{new_task}'?"
                 )
                 if confirm:
-                    self.tasks[selected_task_index] = new_task
+                    self.tasks[task_id - 1] = new_task
                     self.task_entry.delete(0, tk.END)
-                    self.update_task_listbox()
+                    self.task_treeview.item(selected_item, values=(task_id, new_task))
                     messagebox.showinfo("Task Edited", f"Task updated to: '{new_task}'")
             else:
                 messagebox.showwarning("Input Error", "Task cannot be empty!")
@@ -556,9 +572,13 @@ class ToDoApp(mainWindow):
             messagebox.showwarning("Selection Error", "Please select a task to edit!")
 
     def update_task_listbox(self):
-        self.task_listbox.delete(0, tk.END)
+         # Clear Treeview
+        for record in self.task_treeview.get_children():
+            self.task_treeview.delete(record)
+
+        # Update Treeview with updated tasks
         for index, task in enumerate(self.tasks, start=1):
-            self.task_listbox.insert(tk.END, f"#{index}: {task}")
+            self.task_treeview.insert("", "end", values=(index, task))
 
 class Timer(mainWindow):
     def __init__(self):
@@ -589,42 +609,81 @@ class Pomodorotimer(Timer):
         self.mainApp = mainApp
         self.root.title(title)
         self.current_frame = ttk.Frame(self.root)
-        self.current_frame.pack(fill='both')
-
+        self.current_frame.pack(fill='both',expand=True)
+    
         # Timer configuration
         self.cycles = 4
         self.current_cycle = 0
+        self.pomodoro_count = 0
+    
 
-        # GUI setup
-        self.label = ttk.Label(self.current_frame, text="00 : 00", font=("Gabrielelana", 50), bootstyle='primary')
+        self.setupGUI()
+
+    def setupGUI(self):    # GUI setup 
+        
+        #Main container for Timer
+        main_container = ttk.Frame(self.current_frame)
+        main_container.pack(fill='both', expand=True)
+
+        #Timer Display
+        self.label = tb.Label(main_container, text="00 : 00", font=("Helvetica", 40, "bold"), bootstyle='primary')
         self.label.pack(pady=20)
 
-        self.input_duration = tk.Entry(self.current_frame, font=("Gabrielelana", 20), justify="center")
-        self.input_duration.pack(pady=20)
+        #Input Section
+        input_container = tb.Frame(main_container, bootstyle='light')
+        input_container.pack(fill='x', padx=50, pady=10)
+
+
+        #Work Duration Input
+        time_frame = tb.Frame(input_container, bootstyle='light')
+        time_frame.pack(side='left', expand=True, padx=5)
+
+        self.input_duration = ttk.Entry(time_frame, justify="center")
+        self.input_duration.pack()
         
-        self.work_duration_label = ttk.Label(self.current_frame, text="Work Duration(min)", font=("Times New Roman", 20), bootstyle='primary')
+        self.work_duration_label = tb.Label(time_frame, text='Work Duration (min)', font=("Helvetica", 20, "bold"), bootstyle='primary')
         self.work_duration_label.pack()
 
-        self.input_shortbreak = tk.Entry(self.current_frame, font=("Gabrielelana", 20), justify="center")
-        self.input_shortbreak.pack(pady=20)
+        self.input_shortbreak = tb.Entry(time_frame, justify="center")
+        self.input_shortbreak.pack()
         
-        self.short_break_label = ttk.Label(self.current_frame, text="Short Break", font=("Times New Roman", 20), bootstyle='primary')
+        self.short_break_label = tb.Label(time_frame, text="Short Break (min)", font=("Helvetica", 20, "bold"), bootstyle='primary')
         self.short_break_label.pack()
 
-        self.input_longbreak = tk.Entry(self.current_frame, font=("Gabrielelana", 20), justify="center")
-        self.input_longbreak.pack(pady=20)
+        self.input_longbreak = tb.Entry(time_frame, justify="center")
+        self.input_longbreak.pack()
         
-        self.long_break_label = ttk.Label(self.current_frame, text="Long Break", font=("Times New Roman", 20), bootstyle='primary')
+        self.long_break_label = tb.Label(time_frame, text="Long Break (min)", font=("Helvetica", 20, "bold"), bootstyle='primary')
         self.long_break_label.pack()
 
-        self.skip = tk.Button(self.current_frame, text="Skip", font=("Gabrielelana", 20), command=self.timer_skip, bg="white", fg="#FF6347")
-        self.skip.pack(pady=10)
+        self.button_frame = tb.Frame(main_container)
+        self.button_frame.pack(pady=20)
 
-        self.start = tk.Button(self.current_frame, text="Start", font=("Gabrielelana", 20), command=self.timer_start, bg="white", fg="#FF6347")
-        self.start.pack(pady=10)
+        self.skip = tb.Button(self.button_frame, text="Skip", command=self.timer_skip, bootstyle="danger-outline")
+        self.skip.pack(side='left', padx=10)
 
-        self.reset = tk.Button(self.current_frame, text="Reset", font=("Gabrielelana", 20), command=self.timer_reset, bg="white", fg="#FF6347")
-        self.reset.pack(pady=10)
+        self.start = tb.Button(self.button_frame, text="Start", command=self.timer_start, bootstyle="success-outline")
+        self.start.pack(side='left', padx=10)
+
+        self.reset = tb.Button(self.button_frame, text="Reset", command=self.timer_reset, bootstyle="warning-outline")
+        self.reset.pack(side='left', padx=10)
+
+        self.quit_button = tb.Button(self.button_frame, text="Exit", command=self.return_to_main_menu, bootstyle="primary-outline")
+        self.quit_button.pack(side='left', padx=10)
+
+        self.pomodoro_count_label = tb.Label(main_container, font=("Helvetica", 15, "bold"), text="Pomodoros Completed: 0", bootstyle='danger')
+        self.pomodoro_count_label.pack(pady=10)
+
+        self.session_type_label = tb.Label(main_container, font=("Helvetica", 15, "bold"), text="Current Session: None", bootstyle='danger')
+        self.session_type_label.pack(pady=10)
+
+
+    def return_to_main_menu(self):
+
+        self.clear_frame()
+        self.mainApp.menuGUI()    
+
+    
     
     def timer_start(self):
         if not self.running:
@@ -653,93 +712,142 @@ class Pomodorotimer(Timer):
         self.running = False
         self.current_cycle = 0
         self.remaining_time = 0  # Reset remaining time
-        self.label.config(text="00 : 00", bg="#FF6347")
-        self.root.config(bg="#FF6347")
-        self.start.config(fg="#FF6347")
-        self.skip.config(fg="#FF6347")
-        self.reset.config(fg="#FF6347")
-        self.work_duration_label.config(fg="white", bg="#FF6347")
-        self.short_break_label.config(fg="white", bg="#FF6347")
-        self.long_break_label.config(fg="white", bg="#FF6347")
+        self.label.config(text="00 : 00")
+
+        #Reset UI Button to default color setting
+        for button, style in [
+            (self.start, "success-outline"),
+            (self.skip, "danger-outline"),
+            (self.reset, "warning-outline"),
+            (self.quit_button, "primary-outline")
+        ]:
+            button.config(bootstyle=style)
+
         self.start.config(text="Start", command=self.timer_start)
+
+        self.pomodoro_count = 0
+        self.pomodoro_count_label.config(text=f"Pomodoros Completed: {self.pomodoro_count}")
+        self.session_type_label.config(text='Current Session: None', bootstyle='danger')
+
+    
+    # Ensure labels are reset visually (if needed)
+        self.work_duration_label.config(text="Work Duration (min)")
+        self.short_break_label.config(text="Short Break")
+        self.long_break_label.config(text="Long Break")
         self.input_duration.delete(0, tk.END)
         self.input_shortbreak.delete(0, tk.END)
         self.input_longbreak.delete(0, tk.END)
     
     def timer_skip(self):
+
+        # Prevent skipping at the end of cycle
+        if (self.current_cycle == 0) and (not self.session_type == 'Long Break' or not self.session_type == 'Work Duration' or not self.session_type == 'Short Break'):
+            messagebox.showwarning(title='Skip Error', message='Press Start or Reset to continue the cycle!')
+            return
+
         if self.running:
             self.running = False
             self.start.config(text="Start", command=self.timer_resume)
-            self.work_duration_label.config(fg="white", bg="#FF6347")
-            self.short_break_label.config(fg="white", bg="#FF6347")
-            self.long_break_label.config(fg="white", bg="#FF6347")
+            self.work_duration_label.config(bootstyle='primary')
+            self.short_break_label.config(bootstyle='primary')
+            self.long_break_label.config(bootstyle='primary')
         self.next_cycle()
 
     def next_cycle(self):
         if self.current_cycle >= 4:  
             self.current_cycle = 0
-            self.label.config(bg="orange")
-            self.root.config(bg="orange")
-            self.work_duration_label.config(fg="white", bg="orange")
-            self.short_break_label.config(fg="white", bg="orange")
-            self.long_break_label.config(fg="white",bg ="orange")
-            self.start.config(fg="orange")
-            self.skip.config(fg="orange")
-            self.reset.config(fg="orange")
-            self.label.config(text="End! Reset or Start", bg="orange", fg="white")
+            self.label.config(text="End! Reset or Start", bootstyle='danger')
             self.start.config(text="Start", command=self.timer_start)
+            
+            # Change all elements to danger style
+            danger_style_elements = [
+                self.current_frame, self.label, 
+                self.work_duration_label, self.short_break_label, self.long_break_label,
+                self.start, self.skip, self.reset, self.quit_button, self.session_type_label
+            ]
+            
+            for element in danger_style_elements:
+                element.config(bootstyle='danger')
+
+            # Increment Pomodoro Counter after a full cycle
+            self.pomodoro_count += 1
+            self.pomodoro_count_label.config(text=f"Pomodoros Completed: {self.pomodoro_count}")
+
+            #Update Session Type & Reset time to default
+            self.session_type_label.config(text=f"Current Session: None")
+            self.remaining_time = 0
+            
+                
             return
 
         if self.current_cycle == 0:
             # First work session
             self.session_type = "Work Duration"
-            self.label.config(fg="white" , bg="#FF6347", text=f"{self.duration:02}")
-            self.root.config(bg="#FF6347")                
-            self.work_duration_label.config(fg="white", bg="#FF6347")
-            self.short_break_label.config(fg="white", bg="#FF6347")
-            self.long_break_label.config(fg="white", bg="#FF6347")
-            self.start.config(fg="#FF6347")
-            self.skip.config(fg="#FF6347")
-            self.reset.config(fg="#FF6347")
+            self.label.config(bootstyle='primary', text=f"{self.duration:02}")
+
+            primary_style_elements = [self.current_frame, self.label, 
+                self.work_duration_label, self.short_break_label, self.long_break_label,
+                self.start, self.skip, self.reset, self.quit_button, self.session_type_label
+                ]
+            
+            for element in primary_style_elements:
+                element.config(bootstyle='primary')
+
+            #Update Session Type 
+            self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.duration * 60
 
         elif self.current_cycle == 1:
             # Short break
             self.session_type = "Short Break"
-            self.label.config(fg="white", bg="#87CEEB", text=f"{self.shortbreak:02} : 00")
-            self.root.config(bg="#87CEEB")
-            self.work_duration_label.config(fg="white", bg="#87CEEB")
-            self.short_break_label.config(fg="white", bg="#87CEEB")
-            self.long_break_label.config(fg="white", bg="#87CEEB")
-            self.start.config(fg="#87CEEB")
-            self.skip.config(fg="#87CEEB")
-            self.reset.config(fg="#87CEEB")
+            self.label.config(bootstyle='info', text=f"{self.shortbreak:02} : 00")
+            
+            info_style_elements = [self.current_frame, self.label, 
+                self.work_duration_label, self.short_break_label, self.long_break_label,
+                self.start, self.skip, self.reset, self.quit_button, self.session_type_label
+                ]
+            
+            for element in info_style_elements:
+                element.config(bootstyle='info')
+
+            #Update Session Type 
+            self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.shortbreak * 60
 
         elif self.current_cycle == 2:
             # Second work session
             self.session_type = "Work Duration"
-            self.label.config(fg="white", bg="#FF6347", text=f"{self.duration:02} : 00")
-            self.root.config(bg="#FF6347")
-            self.work_duration_label.config(fg="white", bg="#FF6347")
-            self.short_break_label.config(fg="white", bg="#FF6347")
-            self.long_break_label.config(fg="white", bg="#FF6347")
-            self.start.config(fg="#FF6347")
-            self.skip.config(fg="#FF6347")
-            self.reset.config(fg="#FF6347")     
+            self.label.config(bootstyle='primary', text=f"{self.duration:02} : 00")
+
+            primary_style_elements = [self.current_frame, self.label, 
+                self.work_duration_label, self.short_break_label, self.long_break_label,
+                self.start, self.skip, self.reset, self.quit_button, self.session_type_label
+                ]  
+            
+            for element in primary_style_elements:
+                element.config(bootstyle='primary')
+            
+
+            #Update Session Type 
+            self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.duration * 60
 
         elif self.current_cycle == 3:
             # Long break
             self.session_type = "Long Break"  
-            self.label.config(fg="white", bg="#32CD32", text=f"{self.longbreak:02} : 00")
-            self.root.config(bg="#32CD32")
-            self.work_duration_label.config(fg="white", bg="#32CD32")
-            self.short_break_label.config(fg="white", bg="#32CD32")
-            self.long_break_label.config(fg="white", bg="#32CD32")
-            self.start.config(fg="#32CD32")
-            self.skip.config(fg="#32CD32")
-            self.reset.config(fg="#32CD32")
+            self.label.config(bootstyle='success', text=f"{self.longbreak:02} : 00")
+            
+            success_style_elements = [self.current_frame, self.label, 
+                self.work_duration_label, self.short_break_label, self.long_break_label,
+                self.start, self.skip, self.reset, self.quit_button, self.session_type_label
+                ]  
+            
+            for element in success_style_elements:
+                element.config(bootstyle='success')
+            
+
+            #Update Session Type 
+            self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.longbreak * 60
 
         self.current_cycle += 1
@@ -756,28 +864,25 @@ class Pomodorotimer(Timer):
             self.duration = int(self.input_duration.get())
             self.shortbreak = int(self.input_shortbreak.get())
             self.longbreak = int(self.input_longbreak.get())
+
             if self.duration <= 0 or self.shortbreak <= 0 or self.longbreak <= 0:
                 raise Exception("Duration must be a positive integer")
+            
             return True  # Validation passed
         except Exception as e:
-            self.label.config(bg="red")
-            self.root.config(bg="red")
-            self.start.config(fg="red")
-            self.skip.config(fg="red")
-            self.reset.config(fg="red")
-            self.work_duration_label.config(fg="white", bg="red")
-            self.short_break_label.config(fg="white", bg="red")
-            self.long_break_label.config(fg="white", bg="red")
+            ui_elements = [
+            self.current_frame, self.label, 
+            self.work_duration_label, self.short_break_label, self.long_break_label,
+            self.start, self.skip, self.reset, self.quit_button
+        ]   
+            for element in ui_elements:
+                element.config(bootstyle='primary')
+
             self.label.config(text="Invalid Input")
             print(f"Error: {e}")
             return False  # Validation failed
 
-    def log_session(self, session_type):
-        try:
-            with open("pomodoro_log.txt", "a") as file:
-                file.write(f"Cycle {self.current_cycle}: {session_type}\n")
-        except Exception as e:
-            print(f"Failed to log session: {e}")
+   
 
 if __name__ == "__main__":
     app = mainApp(title='QuakTask')
