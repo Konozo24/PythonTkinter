@@ -671,11 +671,13 @@ class Pomodorotimer(Timer):
         self.quit_button = tb.Button(self.button_frame, text="Exit", command=self.return_to_main_menu, bootstyle="primary-outline")
         self.quit_button.pack(side='left', padx=10)
 
+        self.session_type_label = tb.Label(main_container, font=("Helvetica", 15, "bold"), text="Current Session: None", bootstyle='danger')
+        self.session_type_label.pack(pady=10)
+
         self.pomodoro_count_label = tb.Label(main_container, font=("Helvetica", 15, "bold"), text="Pomodoros Completed: 0", bootstyle='danger')
         self.pomodoro_count_label.pack(pady=10)
 
-        self.session_type_label = tb.Label(main_container, font=("Helvetica", 15, "bold"), text="Current Session: None", bootstyle='danger')
-        self.session_type_label.pack(pady=10)
+        
 
 
     def return_to_main_menu(self):
