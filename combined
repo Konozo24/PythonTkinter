@@ -23,6 +23,9 @@ class mainWindow:
         self.window_size = f'{1000}x{750}+{x}+{y}'
         self.root.geometry(self.window_size)
         
+        self.style = tb.Style()
+        self.style.configure('Custom.TButton', font=("Helvetica", 20), background='#4C9A8C', foreground='#FFFFFF')  # Initial font size
+        self.style.configure('Custom2.TButton', font=("Helvetica", 20), background='#f5bf42', foreground='#FFFFFF')
         
         
 
@@ -42,7 +45,7 @@ class mainWindow:
             self.current_frame.destroy()
         self.current_frame = None
     
-        
+        #Remove remaining widgets 
         for widget in self.root.winfo_children():
             print(widget)
             widget.destroy()
@@ -73,17 +76,20 @@ class mainApp(mainWindow):
         
         
         #Button for Main Menu
-        self.current_frame.config(style='My.TFrame')
-        self.button1 = ttk.Button(self.current_frame, text='Expense Tracker', bootstyle='info', 
-                                  command=self.open_expense_tracker).pack(ipadx=100, ipady=10, fill=None, expand=True)
-        self.button2 = ttk.Button(self.current_frame, text='Flashcard Quizzer', bootstyle='info', 
-                                  command=self.open_flashcard).pack(ipadx=95, ipady=10, fill=None, expand=True)
-        self.button3 = ttk.Button(self.current_frame, text='To-Do List', bootstyle='info', 
-                                  command=self.open_ToDoList).pack(ipadx=119, ipady=10, fill=None, expand=True)
-        self.button4 = ttk.Button(self.current_frame, text='Pomodoro Timer', bootstyle='info', 
-                                  command=self.open_PomodoroTimer).pack(ipadx=97, ipady=10, fill=None, expand=True)
-        self.button5 = ttk.Button(self.current_frame, text='Exit', bootstyle='danger', 
-                                  command=self.root.quit).pack(ipadx=100, ipady=10, fill=None, expand=True)
+        self.buttons = [
+            ttk.Button(self.current_frame, text='Expense Tracker', style='Custom.TButton',
+                       command=self.open_expense_tracker).pack(ipadx=100, ipady=10, pady=20, fill=None, expand=True),
+            ttk.Button(self.current_frame, text='Flashcard Quizzer', style='Custom.TButton',
+                       command=self.open_flashcard).pack(ipadx=91, ipady=10, pady=20, fill=None, expand=True),
+            ttk.Button(self.current_frame, text='To-Do List', style='Custom.TButton',
+                       command=self.open_ToDoList).pack(ipadx=147, ipady=10, pady=20, fill=None, expand=True),
+            ttk.Button(self.current_frame, text='Pomodoro Timer', style='Custom.TButton',
+                       command=self.open_PomodoroTimer).pack(ipadx=103, ipady=10, pady=20, fill=None, expand=True),
+            ttk.Button(self.current_frame, text='Exit', style='Custom2.TButton',
+                       command=self.root.quit).pack(ipadx=100, ipady=10, pady=20, fill=None, expand=True)
+        ]
+
+    
 
 
     # Open the Expense Tracker in a new window
@@ -131,7 +137,8 @@ class ExpenseTracker(mainWindow):
         self.root.title(title)
         self.current_frame = ttk.Frame(self.root)
         self.current_frame.pack(fill='both')
-        
+        self.style = tb.Style()
+        self.style.configure('.', font=("Helvetica", 15))
         # Initialise expense data and categories
         self.expense_df = pd.DataFrame(columns=['Date', 'Amount', 'Category', 'Description'])
         self.categories = ["Food", "Transportation", "Utilities", "Entertainment", "Others"]
@@ -280,7 +287,7 @@ class ExpenseTracker(mainWindow):
         
         #Check existence of any category
         if self.expense_df.empty:
-            messagebox.showerror(title='Visualisation Error', message=f'Cant visualise expenses')
+            messagebox.showerror(title='Visualisation Error', message=f'Unable to visualise expenses.')
             return
         
         #Set visual style 
@@ -292,7 +299,7 @@ class ExpenseTracker(mainWindow):
         #Create piechart with category totals
         plt.pie(totalCategory.values, labels=totalCategory.index, 
                 autopct='%1.1f%%', shadow=True, 
-                wedgeprops={'edgecolor': 'black' })
+                wedgeprops={'edgecolor': 'black'})
         
         #Set piechart title
         plt.title('Expenses by Category')
@@ -302,14 +309,21 @@ class ExpenseTracker(mainWindow):
         
         #Adjust layout and display chart
         plt.tight_layout()
+        plt.legend(title='Category:')
         plt.show()
 
     #Save expenses to csv file
     def save_Expenses(self):    
         try:
-            file_name = f"expense_data/expenses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            self.expense_df.to_csv(file_name, index=False)
-            messagebox.showinfo(title='File saved', message='File saved successfully.')
+            file_name = f"expense_data/expenses.csv"
+            answer = messagebox.askokcancel(title='Save Confirmation', message='Confirm to save?')
+
+            if answer == True:
+                self.expense_df.to_csv(file_name, index=False)
+                messagebox.showinfo(title='File saved', message='File saved successfully.')
+
+            else:
+                return
         except Exception as e:
             messagebox.showerror(title='Save Error', message=f'Unable to save the file: {str(e)}')
 
@@ -326,37 +340,38 @@ class ExpenseTracker(mainWindow):
         """
         
         try:
-            # Prompt the user to enter the file name of the CSV file
-            file_name = simpledialog.askstring('Input File Name', "Enter your file name: ", parent=self.root)   
-            file_path = f"expense_data/{file_name}" 
 
-            if not file_name:
-                return
-            
-            # Load the file into a DataFrame, ensuring the 'Date' column is parsed correctly
-            loaded_file = pd.read_csv(file_path, parse_dates= ['Date'])
-            
-        
-            #Update expenses Dataframe
-            self.expense_df = loaded_file
+            answer = messagebox.askokcancel(title='Load Confirmation', message='Confirm to load?')
+            if answer == True:
+                #the file name of the CSV file
+                file_path = f"expense_data/expenses.csv" 
 
             
-            #Delete old records
-            for record in self.tree.get_children():
-                self.tree.delete(record)
-
-            #Update Treeview from expenses Dataframe
-            for index, row in self.expense_df.iterrows():
-                dollar_amount = f"${row['Amount']}"
-                self.tree.insert(parent='', index='end', values=(row['Date'].strftime('%Y-%m-%d'), 
-                                                                 dollar_amount, 
-                                                                 row['Category'],
-                                                                 row['Description']))
+                # Load the file into a DataFrame, ensuring the 'Date' column is parsed correctly
+                loaded_file = pd.read_csv(file_path, parse_dates= ['Date'])
                 
-            messagebox.showinfo(title='Expenses loaded', message=f'Expenses from {file_path} loaded successfully.')
+            
+                #Update expenses Dataframe
+                self.expense_df = loaded_file
+
+                
+                #Delete old records
+                for record in self.tree.get_children():
+                    self.tree.delete(record)
+
+                #Update Treeview from expenses Dataframe
+                for index, row in self.expense_df.iterrows():
+                    dollar_amount = f"${row['Amount']}"
+                    self.tree.insert(parent='', index='end', values=(row['Date'].strftime('%Y-%m-%d'), 
+                                                                    dollar_amount, 
+                                                                    row['Category'],
+                                                                    row['Description']))
+                    
+                messagebox.showinfo(title='Expenses loaded', message=f'Expenses from {file_path} loaded successfully.')
+            else:
+                return
         except Exception as e:
             messagebox.showerror(title='Load Error', message=f'Unable to load the file: {str(e)}')
-
 
 class FlashcardBase(mainWindow):
     """Base class to manage flashcards."""
@@ -387,6 +402,7 @@ class FlashcardApp(FlashcardBase):
         self.root.title(title)
         self.current_frame = ttk.Frame(self.root)
         self.current_frame.pack(fill='both')
+        
         
         self.correct_answers = 0  # Tracks correct answers during quizzes
         
@@ -513,124 +529,225 @@ class ToDoApp(mainWindow):
     def __init__(self, title, root_window, mainApp):
         self.root = root_window
         self.mainApp = mainApp
-        self.root.title(title)
+        self.tasks = pd.DataFrame(columns=["ID", "Task", "Important", "Done"])
+        self.setup_ui()
+
+    def setup_ui(self):
         self.current_frame = ttk.Frame(self.root)
         self.current_frame.pack(fill='both', expand=True)
-        self.style = ttk.Style()
-        self.tasks = []
 
-        self.GUI_menu()
-    
+        ttk.Label(self.current_frame, text="Enter a New Task:", font=('Arial', 25, 'bold')).pack(padx=10, pady=10, anchor="w")
+        self.task_entry = ttk.Entry(self.current_frame, width=50)
+        self.task_entry.pack(ipady=10, padx=10, fill="x")
 
-    def GUI_menu(self):
-        self.add_task_label = ttk.Label(self.current_frame, text="Enter a New Task:", font=('Arial', 25, 'bold'), style='primary.TLabel')
-        self.add_task_label.pack(padx=10, pady=10, anchor="w")
 
-        self.task_entry = ttk.Entry(self.current_frame, width=50, style='primary.TEntry')
-        self.task_entry.pack(ipady=10,padx=10, fill="x")  # Fill horizontally
+        ttk.Button(self.root, text="Add Task", command=self.add_task).pack(side="left", padx=5)
+        ttk.Button(self.root, text="Edit Task", command=self.edit_task).pack(side="left", padx=5)
+        ttk.Button(self.root,text="Mark as Done", command=self.mark_as_done).pack(side="left", padx=5)
+        ttk.Button(self.root, text="Mark as Important", command=self.mark_as_important).pack(side="left", padx=5)
+        ttk.Button(self.root, text="Back to Menu", command=self.return_to_main_menu).pack(side="left", padx=10)
 
-        # Add Task and Edit Task buttons to the right of the entry bar
-        button_frame = ttk.Frame(self.current_frame)  # Create a frame for the buttons
+        # Task list
+        self.task_treeview = ttk.Treeview(self.current_frame, columns=("ID", "Task", "Important", "Done"), show="headings")
+        self.task_treeview.heading("ID", text="ID")
+        self.task_treeview.heading("Task", text="Task")
+        self.task_treeview.heading("Important", text="Important")
+        self.task_treeview.heading("Done", text="Done")
+        self.task_treeview.column("ID", width=50)
+        self.task_treeview.column("Task", width=300)
+        self.task_treeview.column("Important", width=100)
+        self.task_treeview.column("Done", width=100)
+        self.task_treeview.pack(padx=10, pady=10, fill="both", expand=True)
+
+        # Save/Load buttons
+        control_frame = ttk.Frame(self.current_frame)
+        control_frame.pack(pady=10)
+
+        ttk.Button(control_frame, text="Save Tasks", command=self.save_tasks).pack(side="left", padx=10)
+        ttk.Button(control_frame, text="Load Tasks", command=self.load_tasks).pack(side="left", padx=10)
+        ttk.Button(control_frame, text="Delete Task", command=self.delete_task).pack(side="left", padx=10)
+        ttk.Button(control_frame, text="Back to Menu", command=self.return_to_main_menu).pack(side="left", padx=10)
+
+class ToDoApp(mainWindow):
+    # Constructor initializes the ToDoApp class
+    def __init__(self, title, root_window, mainApp):
+        self.root = root_window  # Root window for the application
+        self.mainApp = mainApp  # Main app instance
+        self.tasks = pd.DataFrame(columns=["ID", "Task", "Important", "Done"])  # DataFrame to store tasks
+        self.style = tb.Style()
+        self.style.configure('.', font=("Helvetica", 15))
+
+        self.setup_ui()  # Set up the user interface
+
+    # Method to set up the UI components
+    def setup_ui(self):
+        self.current_frame = ttk.Frame(self.root)  # Frame to hold UI elements
+        self.current_frame.pack(fill='both', expand=True)
+
+        # Label for task input field
+        ttk.Label(self.current_frame, text="Enter a New Task:", font=('Arial', 30, 'bold'), bootstyle='primary').pack(padx=10, pady=10, anchor="w")
+        
+        # Entry widget for entering a task
+        self.task_entry = ttk.Entry(self.current_frame, width=50, bootstyle='primary')
+        self.task_entry.pack(ipady=10, padx=10, fill="x")
+
+        # Button frame containing action buttons
+        button_frame = ttk.Frame(self.current_frame)
         button_frame.pack(padx=10, fill="both", expand=True)
 
-        self.add_button = ttk.Button(button_frame, text="Add Task", command=self.add_task, bootstyle='success')
-        self.add_button.pack(side="left", padx=5)
+        # Action buttons for task operations
+        ttk.Button(button_frame, text="Add Task", command=self.add_task, bootstyle='success').pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Edit Task", command=self.edit_task, bootstyle='info').pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Mark as Done", command=self.mark_as_done, bootstyle='info').pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Mark as Important", command=self.mark_as_important, bootstyle='info').pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Cancel Mark as Done", command=self.cancel_mark_as_done, bootstyle='info').pack(side="left", padx=5)
+        ttk.Button(button_frame, text="Cancel Important", command=self.cancel_mark_as_important, bootstyle='info').pack(side="left", padx=5)
 
-        self.edit_button = ttk.Button(button_frame, text="Edit Task", command=self.edit_task, bootstyle='info')
-        self.edit_button.pack(side="left", padx=5)
+        # Treeview to display tasks
+        self.task_treeview = ttk.Treeview(self.current_frame, columns=("ID", "Task", "Important", "Done"), show="headings", bootstyle='primary')
+        self.task_treeview.heading("ID", text="ID", anchor='w')
+        self.task_treeview.heading("Task", text="Task", anchor='w')
+        self.task_treeview.heading("Important", text="Important", anchor='w')
+        self.task_treeview.heading("Done", text="Done", anchor='w')
+        self.task_treeview.column("ID", width=50)
+        self.task_treeview.column("Task", width=300)
+        self.task_treeview.column("Important", width=100)
+        self.task_treeview.column("Done", width=100)
+        self.task_treeview.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Listbox below the entry bar
-        self.task_treeview = ttk.Treeview(self.current_frame, columns=("ID", "Tasks"), show="headings", style='primary.Treeview')
-        self.task_treeview.heading("ID", text="ID")
-        self.task_treeview.heading("Tasks", text="Tasks")
-        self.task_treeview.column("ID", anchor="center", width=20)
-        self.task_treeview.column("Tasks", anchor="center", width=120)
-        self.task_treeview.pack(padx=10, fill="both", expand=True)  # Fill horizontally
+        # Control frame with buttons for saving, loading, deleting tasks
+        control_frame = ttk.Frame(self.current_frame)
+        control_frame.pack(pady=10)
 
-        # Delete Task and Quit buttons at the bottom
-        button_frame_bottom = ttk.Frame(self.current_frame)  # Another frame for bottom buttons
-        button_frame_bottom.pack(padx=30, pady=5, anchor='s',expand=True)
+        # Save, load, delete, and back buttons
+        ttk.Button(control_frame, text="Save Tasks", command=self.save_tasks).pack(side="left", padx=10)
+        ttk.Button(control_frame, text="Load Tasks", command=self.load_tasks).pack(side="left", padx=10)
+        ttk.Button(control_frame, text="Delete Task", command=self.delete_task).pack(side="left", padx=10)
+        ttk.Button(control_frame, text="Back to Menu", command=self.return_to_main_menu).pack(side="left", padx=10)
 
-        self.delete_button = tk.Button(button_frame_bottom, text="Delete Task", command=self.delete_task)
-        self.delete_button.pack(side="left", anchor='center', padx=10, pady=10, ipadx=10)
-
-        self.quit_button = tk.Button(button_frame_bottom, text="Quit", command=self.return_to_main_menu)
-        self.quit_button.pack(side='left', anchor='center', padx=10, pady=10, ipadx=15)
-
-
-    def return_to_main_menu(self):
-        
-        self.mainApp.clear_frame()
-        self.mainApp.menuGUI()
-
-
-    def add_task(self): #Add Task
-        task = self.task_entry.get()
-        if task:
-            self.tasks.append(task)
-            self.task_treeview.insert("", "end", values=(len(self.tasks), task))
-            self.task_entry.delete(0, tk.END)
-
-            
+    # Method to cancel the "Done" mark on a task
+    def cancel_mark_as_done(self):
+        selected = self.task_treeview.selection()
+        if selected:
+            for item in selected:
+                task_id = int(self.task_treeview.item(item, "values")[0])
+                self.tasks.loc[self.tasks["ID"] == task_id, "Done"] = "❌"
+            self.update_task_treeview()
         else:
-            messagebox.showwarning("Input Error", "Task cannot be empty!")
+            messagebox.showwarning("Selection Error", "Please select a task to cancel mark as done!")
 
+    # Method to cancel the "Important" mark on a task
+    def cancel_mark_as_important(self):
+        selected = self.task_treeview.selection()
+        if selected:
+            for item in selected:
+                task_id = int(self.task_treeview.item(item, "values")[0])
+                self.tasks.loc[self.tasks["ID"] == task_id, "Important"] = "❌" 
+            self.update_task_treeview()
+        else:
+            messagebox.showwarning("Selection Error", "Please select a task to cancel mark as important!")
 
-    def delete_task(self): #Delete Task
-        try:
-            selected_task = self.task_treeview.selection()[0]  # Get the selected item
-            task_values = self.task_treeview.item(selected_task, 'values')  # Get the task details
-            task_id = int(task_values[0])  # Extract task ID
-            task_name = task_values[1]
+    # Method to add a new task
+    def add_task(self):
+        task_text = self.task_entry.get().strip() 
+        if task_text:
+            new_task = {
+                "ID": len(self.tasks) + 1,
+                "Task": task_text,
+                "Important": "❌",
+                "Done": "❌" 
+            }
+            self.tasks = pd.concat([self.tasks, pd.DataFrame([new_task])], ignore_index=True)  # Add the task to the DataFrame
+            self.update_task_treeview() 
+            self.task_entry.delete(0, tk.END) 
+        else:
+            messagebox.showwarning("Input Error", "Task cannot be empty!") 
 
-            # Confirmation dialog
-            confirm = messagebox.askyesno(
-                "Confirm Delete",
-                f"Are you sure you want to delete the task: '{task_name}'?"
-            )
+    # Method to delete a task
+    def delete_task(self):
+        
+        selected = self.task_treeview.selection()
+        if selected:
+            confirm = messagebox.askyesno("Delete Confirmation", "Are you sure you want to delete the selected task(s)?")
             if confirm:
-                self.tasks.pop(task_id - 1)
-                self.task_treeview.delete(selected_task)
-                messagebox.showinfo("Task Deleted", f"Task '{task_name}' has been removed.")
-
-        except IndexError:
+                for item in selected:
+                    task_id = int(self.task_treeview.item(item, "values")[0])
+                    self.tasks = self.tasks[self.tasks["ID"] != task_id]  # Remove the task from the DataFrame
+                    self.update_task_treeview()
+        else:
             messagebox.showwarning("Selection Error", "Please select a task to delete!")
 
-
-    def edit_task(self): #Edit Task
-        try:
-            selected_item = self.task_treeview.selection()[0]  # Get the selected item
-            task_values = self.task_treeview.item(selected_item, 'values')  # Get the task details
-            task_id = int(task_values[0])  # Extract task ID
-            old_task = task_values[1]
-
-            new_task = self.task_entry.get().strip()
+    # Method to edit a selected task
+    def edit_task(self):
+        selected = self.task_treeview.selection()
+        if selected:
+            task_id = int(self.task_treeview.item(selected[0], "values")[0])  # Get the task ID
+            old_task = self.tasks.loc[self.tasks["ID"] == task_id, "Task"].values[0]
+            new_task = self.task_entry.get().strip()  # Get the new task text from the entry field
             if new_task:
-                # Confirmation dialog
-                confirm = messagebox.askyesno(
-                    "Confirm Edit",
-                    f"Are you sure you want to change '{old_task}' to '{new_task}'?"
-                )
+                confirm = messagebox.askyesno("Edit Confirmation", f"Are you sure you want to change the task from '{old_task}' to '{new_task}'?")
                 if confirm:
-                    self.tasks[task_id - 1] = new_task
-                    self.task_entry.delete(0, tk.END)
-                    self.task_treeview.item(selected_item, values=(task_id, new_task))
-                    messagebox.showinfo("Task Edited", f"Task updated to: '{new_task}'")
+                    self.tasks.loc[self.tasks["ID"] == task_id, "Task"] = new_task  # Update the task in the DataFrame
+                    self.update_task_treeview() 
+                    self.task_entry.delete(0, tk.END)  
             else:
-                messagebox.showwarning("Input Error", "Task cannot be empty!")
-        except IndexError:
+                messagebox.showwarning("Input Error", "Task cannot be empty!")  
+        else:
             messagebox.showwarning("Selection Error", "Please select a task to edit!")
 
+    # Method to mark a task as done
+    def mark_as_done(self):
+        selected = self.task_treeview.selection()  
+        if selected:
+            for item in selected:
+                task_id = int(self.task_treeview.item(item, "values")[0])
+                self.tasks.loc[self.tasks["ID"] == task_id, "Done"] = "✅" 
+                self.update_task_treeview()
+        else:
+            messagebox.showwarning("Selection Error", "Please select a task to mark as done!")
 
-    def update_task_listbox(self):
-         # Clear Treeview
-        for record in self.task_treeview.get_children():
-            self.task_treeview.delete(record)
+    # Method to mark a task as important
+    def mark_as_important(self):
+        selected = self.task_treeview.selection() 
+        if selected:
+            for item in selected:
+                task_id = int(self.task_treeview.item(item, "values")[0])
+                self.tasks.loc[self.tasks["ID"] == task_id, "Important"] = "✅" 
+            self.update_task_treeview()
+        else:
+            messagebox.showwarning("Selection Error", "Please select a task to mark as important!")
 
-        # Update Treeview with updated tasks
-        for index, task in enumerate(self.tasks, start=1):
-            self.task_treeview.insert("", "end", values=(index, task))
+    # Method to save tasks to a CSV file
+    def save_tasks(self):
+        try:
+            self.tasks.to_csv("tasks.csv", index=False)  # Save tasks to CSV file
+            messagebox.showinfo("Success", "Tasks saved successfully to tasks.csv!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not save tasks: {e}") 
 
+    # Method to load tasks from a CSV file
+    def load_tasks(self):
+        try:
+            self.tasks = pd.read_csv("tasks.csv") 
+            self.update_task_treeview()
+            messagebox.showinfo("Success", "Tasks loaded successfully from tasks.csv!")  
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not load tasks: {e}") 
+
+    # Method to update the task treeview with current tasks
+    def update_task_treeview(self):
+        for item in self.task_treeview.get_children():
+            self.task_treeview.delete(item)  # Remove all existing rows
+        for _, task in self.tasks.iterrows(): # Add each task to the treeview
+            self.task_treeview.insert(
+                "", "end",
+                values=(task["ID"], task["Task"], task["Important"], task["Done"]),
+            )
+
+    # Method to return to the main menu
+    def return_to_main_menu(self):
+        self.mainApp.clear_frame()
+        self.mainApp.menuGUI() 
 
 class Timer(mainWindow):
     def __init__(self):
@@ -664,6 +781,8 @@ class Pomodorotimer(Timer):
         self.root.title(title)
         self.current_frame = ttk.Frame(self.root)
         self.current_frame.pack(fill='both',expand=True)
+        self.style = tb.Style()
+        self.style.configure('.', font=("Helvetica", 25))
     
         # Timer configuration
         self.cycles = 4
@@ -730,6 +849,9 @@ class Pomodorotimer(Timer):
 
         self.pomodoro_count_label = tb.Label(main_container, font=("Helvetica", 15, "bold"), text="Pomodoros Completed: 0", bootstyle='danger')
         self.pomodoro_count_label.pack(pady=10)
+
+        self.history = tb.Button(self.button_frame, text="Check History", command=self.show_history, bootstyle="primary-outline")
+        self.history.pack(side='left', padx=10)
 
     
     def return_to_main_menu(self):
@@ -813,6 +935,7 @@ class Pomodorotimer(Timer):
 
 
     def next_cycle(self):
+
         if self.current_cycle >= 4:  
             self.current_cycle = 0
             self.label.config(text="End! Reset or Start", bootstyle='danger')
@@ -836,6 +959,8 @@ class Pomodorotimer(Timer):
             self.session_type_label.config(text=f"Current Session: None")
             self.remaining_time = 0
             
+            self.log_session(self.session_type)
+
             return
 
         if self.current_cycle == 0:
@@ -855,6 +980,8 @@ class Pomodorotimer(Timer):
             self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.duration * 60
 
+            self.log_session(self.session_type)
+
         elif self.current_cycle == 1:
             # Short break
             self.session_type = "Short Break"
@@ -871,6 +998,8 @@ class Pomodorotimer(Timer):
             #Update Session Type 
             self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.shortbreak * 60
+
+            self.log_session(self.session_type)
 
         elif self.current_cycle == 2:
             # Second work session
@@ -889,6 +1018,8 @@ class Pomodorotimer(Timer):
             #Update Session Type 
             self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.duration * 60
+
+            self.log_session(self.session_type)
 
         elif self.current_cycle == 3:
             # Long break
@@ -913,6 +1044,7 @@ class Pomodorotimer(Timer):
         # Start the countdown for the next session
         self.countdown(self.root, self.label)
 
+        self.log_session(self.session_type)
 
     def run(self):
         if self.running:
@@ -942,6 +1074,46 @@ class Pomodorotimer(Timer):
             self.label.config(text="Invalid Input")
             print(f"Error: {e}")
             return False  # Validation failed
+
+    def log_session(self, session_type):
+        try:
+            with open("pomodoro_log.txt", "a") as file:
+                file.write(f"Cycle {self.current_cycle}: {session_type}\n")
+        except Exception as e:
+            print(f"Failed to log session: {e}")
+
+    def show_history(self):
+        try:
+            with open("pomodoro_log.txt", "r") as file:  # Open file in read mode
+                history = file.read()
+
+            history_window = tk.Toplevel(self.root)  # Use tk.Toplevel to create a new window
+            history_window.title("Pomodoro History")
+
+            history_label = tb.Label(
+                history_window, 
+                text="Pomodoro Cycle History", 
+                font=("Arial", 18), 
+                bootstyle="info"
+            )
+            history_label.pack(pady=10)
+
+            history_text = tk.Text(history_window, wrap="word", font=("Arial", 12))  # tk.Text widget
+            history_text.insert("end", history)  # Use "end" as the position
+            history_text.config(state="disabled")
+            history_text.pack(pady=10)
+
+        except FileNotFoundError:
+            history_window = tk.Toplevel(self.root)
+            history_window.title("Pomodoro History")
+            history_window.geometry("300x200")
+            history_label = tb.Label(
+                history_window, 
+                text="No history found!", 
+                font=("Arial", 18), 
+                bootstyle="danger"
+            )
+            history_label.pack(pady=10)
 
    
 if __name__ == "__main__":
