@@ -786,7 +786,7 @@ class Pomodorotimer(Timer):
     
         # Timer configuration
         self.cycles = 4
-        self.current_cycle = 0
+        self.current_cycle = 1
         self.pomodoro_count = 0
     
         self.setupGUI()
@@ -935,13 +935,12 @@ class Pomodorotimer(Timer):
 
 
     def next_cycle(self):
-
-        if self.current_cycle >= 4:  
-            self.current_cycle = 0
+        if self.current_cycle == 5:  # After 4 cycles (work, break, work, long break)
+            self.current_cycle = 1 # Reset the cycle counter for the next Pomodoro session
             self.label.config(text="End! Reset or Start", bootstyle='danger')
             self.start.config(text="Start", command=self.timer_start)
             
-            # Change all elements to danger style
+            # Change all elements to danger style after completing a full cycle
             danger_style_elements = [
                 self.current_frame, self.label, 
                 self.work_duration_label, self.short_break_label, self.long_break_label,
@@ -955,38 +954,38 @@ class Pomodorotimer(Timer):
             self.pomodoro_count += 1
             self.pomodoro_count_label.config(text=f"Pomodoros Completed: {self.pomodoro_count}")
 
-            #Update Session Type & Reset time to default
+            # Update Session Type & Reset time to default
             self.session_type_label.config(text=f"Current Session: None")
             self.remaining_time = 0
-            
-            self.log_session(self.session_type)
 
+            # Log the completed cycle            
             return
 
-        if self.current_cycle == 0:
+        # Continue to the next session within the cycle
+        if self.current_cycle == 1:
             # First work session
             self.session_type = "Work Duration"
-            self.label.config(bootstyle='primary', text=f"{self.duration:02}")
+            self.label.config(bootstyle='primary', text=f"{self.duration:02} : 00")
 
             primary_style_elements = [self.current_frame, self.label, 
                 self.work_duration_label, self.short_break_label, self.long_break_label,
                 self.start, self.skip, self.reset, self.quit_button, self.session_type_label
                 ]
-            
+
             for element in primary_style_elements:
                 element.config(bootstyle='primary')
 
-            #Update Session Type 
+            # Update session type label and other UI elements
             self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.duration * 60
 
             self.log_session(self.session_type)
 
-        elif self.current_cycle == 1:
+        elif self.current_cycle == 2:
             # Short break
             self.session_type = "Short Break"
             self.label.config(bootstyle='info', text=f"{self.shortbreak:02} : 00")
-            
+
             info_style_elements = [self.current_frame, self.label, 
                 self.work_duration_label, self.short_break_label, self.long_break_label,
                 self.start, self.skip, self.reset, self.quit_button, self.session_type_label
@@ -995,13 +994,13 @@ class Pomodorotimer(Timer):
             for element in info_style_elements:
                 element.config(bootstyle='info')
 
-            #Update Session Type 
+            # Update session type label and other UI elements
             self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.shortbreak * 60
 
             self.log_session(self.session_type)
 
-        elif self.current_cycle == 2:
+        elif self.current_cycle == 3:
             # Second work session
             self.session_type = "Work Duration"
             self.label.config(bootstyle='primary', text=f"{self.duration:02} : 00")
@@ -1013,19 +1012,18 @@ class Pomodorotimer(Timer):
             
             for element in primary_style_elements:
                 element.config(bootstyle='primary')
-            
 
-            #Update Session Type 
+            # Update session type label and other UI elements
             self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.duration * 60
 
             self.log_session(self.session_type)
 
-        elif self.current_cycle == 3:
+        elif self.current_cycle == 4:
             # Long break
-            self.session_type = "Long Break"  
+            self.session_type = "Long Break"
             self.label.config(bootstyle='success', text=f"{self.longbreak:02} : 00")
-            
+
             success_style_elements = [self.current_frame, self.label, 
                 self.work_duration_label, self.short_break_label, self.long_break_label,
                 self.start, self.skip, self.reset, self.quit_button, self.session_type_label
@@ -1033,18 +1031,17 @@ class Pomodorotimer(Timer):
             
             for element in success_style_elements:
                 element.config(bootstyle='success')
-            
 
-            #Update Session Type 
+            # Update session type label and other UI elements
             self.session_type_label.config(text=f"Current Session: {self.session_type}")
             self.remaining_time = self.longbreak * 60
 
-        self.current_cycle += 1
+            self.log_session(self.session_type)
+
+        self.current_cycle += 1  # Increment cycle for the next session
 
         # Start the countdown for the next session
         self.countdown(self.root, self.label)
-
-        self.log_session(self.session_type)
 
     def run(self):
         if self.running:
@@ -1077,43 +1074,47 @@ class Pomodorotimer(Timer):
 
     def log_session(self, session_type):
         try:
+            # Log each cycle number and session type
             with open("pomodoro_log.txt", "a") as file:
                 file.write(f"Cycle {self.current_cycle}: {session_type}\n")
         except Exception as e:
             print(f"Failed to log session: {e}")
 
+
     def show_history(self):
         try:
-            with open("pomodoro_log.txt", "r") as file:  # Open file in read mode
+            with open("pomodoro_log.txt", "r") as file:
                 history = file.read()
-
-            history_window = tk.Toplevel(self.root)  # Use tk.Toplevel to create a new window
+    
+            history_window = tk.Toplevel(self.root)  # Create a new window to display history
             history_window.title("Pomodoro History")
-
+    
             history_label = tb.Label(
-                history_window, 
-                text="Pomodoro Cycle History", 
-                font=("Arial", 18), 
+                history_window,
+                text="Pomodoro Cycle History",
+                font=("Arial", 18),
                 bootstyle="info"
             )
             history_label.pack(pady=10)
-
-            history_text = tk.Text(history_window, wrap="word", font=("Arial", 12))  # tk.Text widget
-            history_text.insert("end", history)  # Use "end" as the position
-            history_text.config(state="disabled")
+    
+            history_text = tk.Text(history_window, wrap="word", font=("Arial", 12))  # Create a text widget for the history
+            history_text.insert("end", history)  # Insert the history into the widget
+            history_text.config(state="disabled")  # Disable editing of the history
             history_text.pack(pady=10)
-
+    
         except FileNotFoundError:
+            # Handle the case when the history file is not found
             history_window = tk.Toplevel(self.root)
             history_window.title("Pomodoro History")
             history_window.geometry("300x200")
             history_label = tb.Label(
-                history_window, 
-                text="No history found!", 
-                font=("Arial", 18), 
+                history_window,
+                text="No history found!",
+                font=("Arial", 18),
                 bootstyle="danger"
             )
             history_label.pack(pady=10)
+
 
    
 if __name__ == "__main__":
