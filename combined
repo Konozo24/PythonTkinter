@@ -138,7 +138,7 @@ class ExpenseTracker(mainWindow):
         self.current_frame = ttk.Frame(self.root)
         self.current_frame.pack(fill='both')
         self.style = tb.Style()
-        self.style.configure('.', font=("Helvetica", 15))
+        self.style.configure('.', font=("Helvetica", 12))
         # Initialise expense data and categories
         self.expense_df = pd.DataFrame(columns=['Date', 'Amount', 'Category', 'Description'])
         self.categories = ["Food", "Transportation", "Utilities", "Entertainment", "Others"]
@@ -575,7 +575,7 @@ class ToDoApp(mainWindow):
         self.mainApp = mainApp  # Main app instance
         self.tasks = pd.DataFrame(columns=["ID", "Task", "Important", "Done"])  # DataFrame to store tasks
         self.style = tb.Style()
-        self.style.configure('.', font=("Helvetica", 15))
+        self.style.configure('.', font=("Helvetica", 12))
 
         self.setup_ui()  # Set up the user interface
 
