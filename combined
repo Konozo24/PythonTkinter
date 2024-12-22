@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import ttkbootstrap as tb
 import time
+import json
 
 
 class mainWindow:
@@ -182,7 +183,7 @@ class ExpenseTracker(mainWindow):
         self.descriptionEntry.grid(row=2, column=1, columnspan=1, padx=5, pady=5)
 
         # Button to add an expense entry
-        add_Button = ttk.Button(inputFrame, text='Add Expense', bootstyle='success', command = self.add_Expense)
+        add_Button = ttk.Button(inputFrame, text='Add Expense', bootstyle='success', command = self.add_Expenses)
         add_Button.grid(row=3, column=1, columnspan=2, pady=10)
 
         # Treeview for displaying expense entries
@@ -209,6 +210,8 @@ class ExpenseTracker(mainWindow):
         saveButton.pack(side=tk.LEFT, padx=10)
         loadButton = ttk.Button(buttonFrame, text='Load Expenses', bootstyle='info', command=self.load_Expenses)
         loadButton.pack(side=tk.LEFT, padx=10)
+        deleteButton = ttk.Button(buttonFrame, text='Delete Expenses', bootstyle='danger', command=self.delete_Expenses)
+        deleteButton.pack(side=tk.LEFT, padx=10)
         closeButton = ttk.Button(buttonFrame, text="Close", command=self.return_to_main_menu)  
         closeButton.pack(side=tk.LEFT, padx=10)
 
@@ -217,9 +220,20 @@ class ExpenseTracker(mainWindow):
         
         self.mainApp.clear_frame()
         self.mainApp.menuGUI()
-        
+    
+    # Private method to add expense
+    def _add_expense_internal(self, amount, category, description, date):
+        new_Expense = pd.DataFrame({
+                "Date": [date],
+                "Amount": [amount],
+                "Category": [category],
+                "Description": [description]
+            })
+        #Add new expense to current expense dataframe
+        self.expense_df = pd.concat([self.expense_df, new_Expense], ignore_index=True)
+        self.expense_df = self.expense_df.sort_values('Date')
 
-    def add_Expense(self):
+    def add_Expenses(self):
         """
         Add a new expense entry to the tracker.
 
@@ -245,17 +259,7 @@ class ExpenseTracker(mainWindow):
             # Convert amount to float and add inputs to Dataframe 
             amount = float(amount)
             display_date = pd.to_datetime(date)
-            new_Expense = pd.DataFrame({
-                "Date": [display_date],
-                "Amount": [amount],
-                "Category": [category],
-                "Description": [description]
-            })
-
-            #Add new expense to current expense dataframe
-            self.expense_df = pd.concat([self.expense_df, new_Expense], ignore_index=True)
-
-            self.expense_df = self.expense_df.sort_values('Date')
+            self._add_expense_internal(amount, category, description, display_date)
             
             #Clear the treeview
             for record in self.tree.get_children():
@@ -276,7 +280,35 @@ class ExpenseTracker(mainWindow):
         except ValueError as e:
             messagebox.showerror(title='Input Error', message=f'{str(e)}')
 
-    
+    def delete_Expenses(self):
+        selected = self.tree.selection()
+        if selected:
+            confirm = messagebox.askyesno(title="Delete Confirmation", message="Are you sure you want to delete the selected Expense(s)?")
+            if confirm:
+                for item in selected:
+                    # Get the values from the treeview
+                    values = self.tree.item(item)['values']  
+                    # Convert values to match DataFrame format for comparison
+                    date = pd.to_datetime(values[0])
+                    amount = float(values[1].replace('$', ''))
+                    category = values[2]
+                    description = values[3]
+
+                    # Find and remove matching row from DataFrame
+                    mask = ((self.expense_df['Date'] == date) & \
+                            (self.expense_df['Amount'] == amount) & \
+                            (self.expense_df['Category'] == category) & \
+                            (self.expense_df['Description'] == description))
+                    self.expense_df = self.expense_df[~mask]
+
+                    # Remove selected item from treeview
+                    self.tree.delete(item)
+
+                self.expense_df.reset_index(drop=True, inplace=True)  # Reset the DataFrame index
+                messagebox.showinfo("Success", "Selected Expense(s) deleted successfully!")
+        else:
+            messagebox.showwarning("Selection Error", "Please select a expense to delete.")
+
     def visualise_Expenses(self):
         """
         Visualize expenses using a pie chart.
@@ -378,7 +410,7 @@ class FlashcardBase(mainWindow):
     def __init__(self):
         
         self.flashcards = {}
-
+        
 
     def add_flashcard(self, question, answer):
         """Add a flashcard to the collection."""
@@ -395,6 +427,7 @@ class FlashcardBase(mainWindow):
 
 class FlashcardApp(FlashcardBase):
     """GUI-based flashcard application."""
+    FLASHCARD_FILE = "flashcards.json"
     def __init__(self, title, root_window, mainApp):
         super().__init__()
         self.root = root_window
@@ -402,7 +435,7 @@ class FlashcardApp(FlashcardBase):
         self.root.title(title)
         self.current_frame = ttk.Frame(self.root)
         self.current_frame.pack(fill='both')
-        
+        self.flashcards = self.load_flashcard()
         
         self.correct_answers = 0  # Tracks correct answers during quizzes
         
@@ -421,7 +454,7 @@ class FlashcardApp(FlashcardBase):
         tk.Button(self.root, text="Create Flashcards", command=self.create_flashcards, padx=20, pady=10).pack(pady=5)
         tk.Button(self.root, text="View Flashcards", command=self.view_flashcards, padx=27, pady=10).pack(pady=5)
         tk.Button(self.root, text="Quiz Yourself", command=self.quiz_flashcards, padx=36, pady=10).pack(pady=5)
-        tk.Button(self.root, text="Reset Flashcards", command=self.confirm_reset, padx=24, pady=10).pack(pady=5)
+        tk.Button(self.root, text="Reset Flashcards", command=self.reset_all_flashcards, padx=24, pady=10).pack(pady=5)
         tk.Button(self.root, text="Exit", command=self.return_to_main_menu, padx=25, pady=10).pack(pady=5)
 
 
@@ -441,13 +474,37 @@ class FlashcardApp(FlashcardBase):
         tk.Button(self.root, text="Add Flashcard", command=self.process_add_flashcard).pack(pady=5)
         tk.Button(self.root, text="Back to Menu", command=self.GUI_menu).pack(pady=5)
 
+    def reset_all_flashcards(self):
+        if messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete all flashcards?"):
+        # Reset the flashcards in memory and in the file
+            self.flashcards = {}
+            self.save_flashcards()  # Save the empty dictionary to the file
+            messagebox.showinfo("Deleted", "All flashcards have been deleted.")
+            self.GUI_menu()
+
+    def load_flashcard(self):
+        """Load flashcards from the file."""
+        try:
+            with open(self.FLASHCARD_FILE, "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+                return {}  # If the file doesn't exist, return an empty dictionary
+        except json.JSONDecodeError:
+                return {}
+
+    def save_flashcards(self):
+        """Save the current flashcards to a file."""
+        with open(self.FLASHCARD_FILE, "w") as file:
+            json.dump(self.flashcards, file)
 
     def process_add_flashcard(self):
         """Handle adding a flashcard."""
         question = self.question_entry.get().strip()
         answer = self.answer_entry.get().strip()
         if question and answer:
-            if self.add_flashcard(question, answer):
+            if question not in self.flashcards:
+                self.flashcards[question] = answer
+                self.save_flashcards()
                 messagebox.showinfo("Success", "Flashcard added!")
                 self.question_entry.delete(0, tk.END)
                 self.answer_entry.delete(0, tk.END)
@@ -511,12 +568,7 @@ class FlashcardApp(FlashcardBase):
         self.GUI_menu()
 
 
-    def confirm_reset(self):
-        """Confirm before resetting flashcards."""
-        if messagebox.askyesno("Confirm Reset", "Are you sure you want to delete all flashcards?"):
-            self.reset_flashcards()
-            messagebox.showinfo("Reset", "All flashcards have been deleted.")
-            self.GUI_menu()
+    
 
 
     def clear_frame(self):
@@ -524,49 +576,6 @@ class FlashcardApp(FlashcardBase):
         for widget in self.root.winfo_children():
             widget.destroy()
     
-
-class ToDoApp(mainWindow):
-    def __init__(self, title, root_window, mainApp):
-        self.root = root_window
-        self.mainApp = mainApp
-        self.tasks = pd.DataFrame(columns=["ID", "Task", "Important", "Done"])
-        self.setup_ui()
-
-    def setup_ui(self):
-        self.current_frame = ttk.Frame(self.root)
-        self.current_frame.pack(fill='both', expand=True)
-
-        ttk.Label(self.current_frame, text="Enter a New Task:", font=('Arial', 25, 'bold')).pack(padx=10, pady=10, anchor="w")
-        self.task_entry = ttk.Entry(self.current_frame, width=50)
-        self.task_entry.pack(ipady=10, padx=10, fill="x")
-
-
-        ttk.Button(self.root, text="Add Task", command=self.add_task).pack(side="left", padx=5)
-        ttk.Button(self.root, text="Edit Task", command=self.edit_task).pack(side="left", padx=5)
-        ttk.Button(self.root,text="Mark as Done", command=self.mark_as_done).pack(side="left", padx=5)
-        ttk.Button(self.root, text="Mark as Important", command=self.mark_as_important).pack(side="left", padx=5)
-        ttk.Button(self.root, text="Back to Menu", command=self.return_to_main_menu).pack(side="left", padx=10)
-
-        # Task list
-        self.task_treeview = ttk.Treeview(self.current_frame, columns=("ID", "Task", "Important", "Done"), show="headings")
-        self.task_treeview.heading("ID", text="ID")
-        self.task_treeview.heading("Task", text="Task")
-        self.task_treeview.heading("Important", text="Important")
-        self.task_treeview.heading("Done", text="Done")
-        self.task_treeview.column("ID", width=50)
-        self.task_treeview.column("Task", width=300)
-        self.task_treeview.column("Important", width=100)
-        self.task_treeview.column("Done", width=100)
-        self.task_treeview.pack(padx=10, pady=10, fill="both", expand=True)
-
-        # Save/Load buttons
-        control_frame = ttk.Frame(self.current_frame)
-        control_frame.pack(pady=10)
-
-        ttk.Button(control_frame, text="Save Tasks", command=self.save_tasks).pack(side="left", padx=10)
-        ttk.Button(control_frame, text="Load Tasks", command=self.load_tasks).pack(side="left", padx=10)
-        ttk.Button(control_frame, text="Delete Task", command=self.delete_task).pack(side="left", padx=10)
-        ttk.Button(control_frame, text="Back to Menu", command=self.return_to_main_menu).pack(side="left", padx=10)
 
 class ToDoApp(mainWindow):
     # Constructor initializes the ToDoApp class
@@ -920,7 +929,7 @@ class Pomodorotimer(Timer):
     def timer_skip(self):
 
         # Prevent skipping at the end of cycle
-        if (self.current_cycle == 0) and (not self.session_type == 'Long Break' or not self.session_type == 'Work Duration' \
+        if (self.current_cycle == 1) and (not self.session_type == 'Long Break' or not self.session_type == 'Work Duration' \
                                           or not self.session_type == 'Short Break'):
             messagebox.showwarning(title='Skip Error', message='Press Start or Reset to continue the cycle!')
             return
