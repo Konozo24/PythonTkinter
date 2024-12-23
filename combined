@@ -196,7 +196,7 @@ class ExpenseTracker(mainWindow):
         add_Button = ttk.Button(inputFrame, text='Add Expense', bootstyle='success', command = self.add_Expenses)
         add_Button.grid(row=3, column=1, columnspan=2, pady=10)
 
-        self.filterVar.trace('w', self.filter_Expenses)
+        self.filterVar.trace_add('write', self.filter_Expenses)
 
         # Treeview for displaying expense entries
         self.tree = ttk.Treeview(self.root, columns=("Date", "Amount", "Category", "Description"), bootstyle='info', show="headings")
