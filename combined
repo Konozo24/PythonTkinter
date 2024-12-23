@@ -502,8 +502,8 @@ class FlashcardApp(FlashcardBase):
         self.answer_entry = tk.Entry(self.root, width=50)
         self.answer_entry.pack(pady=5)
 
-        tk.Button(self.root, text="Add Flashcard", font=("Arial", 15), command=self.process_add_flashcard).pack(pady=5)
-        tk.Button(self.root, text="Back to Menu", font=("Arial", 15), command=self.GUI_menu).pack(pady=5)
+        tk.Button(self.root, text="Add Flashcard", font=("Arial", 12), command=self.process_add_flashcard).pack(pady=5)
+        tk.Button(self.root, text="Back to Menu", font=("Arial", 12), command=self.GUI_menu).pack(pady=5)
 
     def reset_all_flashcards(self):
         if messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete all flashcards?"):
@@ -555,7 +555,7 @@ class FlashcardApp(FlashcardBase):
             for question, answer in self.flashcards.items():
                 tk.Label(self.root, text=f"Q: {question}", font=("Arial", 16)).pack(pady=2)
                 tk.Label(self.root, text=f"A: {answer}", font=("Arial", 16), fg="gray").pack(pady=2)
-        tk.Button(self.root, text="Back to Menu", font=("Arial", 16), command=self.GUI_menu).pack(pady=10)
+        tk.Button(self.root, text="Back to Menu", font=("Arial", 12), command=self.GUI_menu).pack(pady=10)
 
 
     def quiz_flashcards(self):
@@ -572,8 +572,8 @@ class FlashcardApp(FlashcardBase):
         self.question_label.pack(pady=10)
         self.answer_entry = tk.Entry(self.root, width=50)
         self.answer_entry.pack(pady=5)
-        tk.Button(self.root, text="Submit Answer", font=("Arial", 16), command=self.check_answer).pack(pady=5)
-        tk.Button(self.root, text="Back to Menu", font=("Arial", 16), command=self.GUI_menu).pack(pady=5)
+        tk.Button(self.root, text="Submit Answer", font=("Arial", 12), command=self.check_answer).pack(pady=5)
+        tk.Button(self.root, text="Back to Menu", font=("Arial", 12), command=self.GUI_menu).pack(pady=5)
 
 
     def check_answer(self):
