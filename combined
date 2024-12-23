@@ -181,10 +181,22 @@ class ExpenseTracker(mainWindow):
         self.descriptionLabel = ttk.Label(inputFrame, text= 'Description: ').grid(row=2, column=0, sticky= 'w', padx=5, pady=5)
         self.descriptionEntry = ttk.Entry(inputFrame, width=40, bootstyle='info')
         self.descriptionEntry.grid(row=2, column=1, columnspan=1, padx=5, pady=5)
+        
+        ttk.Label(inputFrame, text="Filter by Category:").grid(row=1, column=2, padx=5, pady=5)
+        self.filterVar = tk.StringVar()
+        self.filter_categories = ['All'] + self.categories
+        self.filterCombo = ttk.Combobox(inputFrame, bootstyle='info', textvariable=self.filterVar, values=self.filter_categories)
+        self.filterCombo.grid(row=1, column=3, padx=5, pady=5)
+        self.filterCombo.set('All')
+
+        self.cancel_filter_button = ttk.Button(inputFrame, text='Cancel Filter', bootstyle='info', command= lambda: self.filterCombo.set('All'))
+        self.cancel_filter_button.grid(row=1, column=4, padx=5, pady=5) 
 
         # Button to add an expense entry
         add_Button = ttk.Button(inputFrame, text='Add Expense', bootstyle='success', command = self.add_Expenses)
         add_Button.grid(row=3, column=1, columnspan=2, pady=10)
+
+        self.filterVar.trace('w', self.filter_Expenses)
 
         # Treeview for displaying expense entries
         self.tree = ttk.Treeview(self.root, columns=("Date", "Amount", "Category", "Description"), bootstyle='info', show="headings")
@@ -258,7 +270,7 @@ class ExpenseTracker(mainWindow):
             
             # Convert amount to float and add inputs to Dataframe 
             amount = float(amount)
-            display_date = pd.to_datetime(date)
+            display_date = pd.to_datetime(date, dayfirst=True)
             self._add_expense_internal(amount, category, description, display_date)
             
             #Clear the treeview
@@ -279,6 +291,25 @@ class ExpenseTracker(mainWindow):
 
         except ValueError as e:
             messagebox.showerror(title='Input Error', message=f'{str(e)}')
+
+    def filter_Expenses(self, *args):
+        selected_category = self.filterVar.get()
+
+        for record in self.tree.get_children():
+            self.tree.delete(record)
+
+        if selected_category == 'All':
+            filter_df = self.expense_df
+        else:
+            filter_df = self.expense_df[self.expense_df['Category'] == selected_category]
+
+        for index,row in filter_df.iterrows():
+            self.tree.insert(parent='', index='end', values=(row['Date'].strftime('%Y-%m-%d'), 
+                                                                 f"${row['Amount']}", 
+                                                                 row['Category'], 
+                                                                 row['Description'])
+                                                                 )
+
 
     def delete_Expenses(self):
         selected = self.tree.selection()
