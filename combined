@@ -396,13 +396,13 @@ class ExpenseTracker(mainWindow):
     #Load expenses from CSV file
     def load_Expenses(self):
         """
-    Load expenses from an external CSV file into the tracker.
+        Load expenses from an external CSV file into the tracker.
 
-    - Prompts the user for a file name using a dialog box.
-    - Reads the specified CSV file and parses its contents into a DataFrame.
-    - Updates the treeview widget with the loaded expense entries.
-    - Validates that the file exists and handles errors gracefully.
-    - Raises a Load Error for invalid file name.
+        - Prompts the user for a file name using a dialog box.
+        - Reads the specified CSV file and parses its contents into a DataFrame.
+        - Updates the treeview widget with the loaded expense entries.
+        - Validates that the file exists and handles errors gracefully.
+        - Raises a Load Error for invalid file name.
         """
         
         try:
@@ -438,6 +438,7 @@ class ExpenseTracker(mainWindow):
                 return
         except Exception as e:
             messagebox.showerror(title='Load Error', message=f'Unable to load the file: {str(e)}')
+
 
 class FlashcardBase(mainWindow):
     """Base class to manage flashcards."""
@@ -508,7 +509,7 @@ class FlashcardApp(FlashcardBase):
         self.question_entry.pack(pady=5)
 
         tk.Label(self.root, text="Answer:", font=("Arial", 16)).pack()
-        self.answer_entry = tk.Entry(self.root, width=50)
+        self.answer_entry = tk.Entry(self.root, width=50) 
         self.answer_entry.pack(pady=5)
 
         tk.Button(self.root, text="Add Flashcard", font=("Arial", 15), command=self.process_add_flashcard).pack(pady=5)
@@ -801,6 +802,7 @@ class ToDoApp(mainWindow):
     def return_to_main_menu(self):
         self.mainApp.clear_frame()
         self.mainApp.menuGUI() 
+
 
 class Timer(mainWindow):
     def __init__(self):
